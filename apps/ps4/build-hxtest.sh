@@ -30,7 +30,7 @@ for f in $(cd "$OUT" && find src -name '*.cpp' ! -name '__files__.cpp' ! -name '
 n=$((n+1)); echo "$HERE/hxtest/ps4stubs.cpp $INT/stubs$n.o" >> "$WORK/jobs.txt"
 for f in $RUNTIME; do n=$((n+1)); echo "$f $INT/rt$n.o" >> "$WORK/jobs.txt"; done
 
-FLAGS="--target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c -O2 -w -std=c++11 -frtti -fexceptions -fcxx-exceptions \
+FLAGS="--target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c -O2 -fno-omit-frame-pointer -w -std=c++11 -frtti -fexceptions -fcxx-exceptions \
  -isysroot $TC -isystem $TC/include -isystem $TC/include/c++/v1 -I$OUT/include -I$H/include \
  -D_GNU_SOURCE -DHX_LINUX -DHXCPP_M64 -DHXCPP_VISIT_ALLOCS -DHX_SMART_STRINGS -DHXCPP_API_LEVEL=430 -Wno-invalid-offsetof"
 export FLAGS

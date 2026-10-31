@@ -5,6 +5,11 @@ name: Build PS4 native test (Haxe)
 
 on:
   workflow_dispatch:
+    inputs:
+      deltas:
+        description: 'Crash report: the numbers after "calls:" (space separated) to look up in this build'
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -66,6 +71,11 @@ jobs:
             # nothing to compile in the Makefile itself: the objects are already in x64/Debug
             make
             ls -la *.pkg
+
+            # symbols: lets a crash report (addresses relative to echo_anchor) be turned into function names
+            nm -n piglet/x64/Debug/piglet.elf > /tmp/symbols.txt || true
+            python3 "$GITHUB_WORKSPACE/apps/ps4/lookup.py" /tmp/symbols.txt "${{ inputs.deltas }}" | tee /tmp/lookup.txt
+            python3 -c "t=open('/tmp/lookup.txt').read().replace('%','%25').replace('\n','%0A'); print('::notice title=Crash lookup::'+t) if t.strip() else None"
             cp ./*.pkg "$GITHUB_WORKSPACE/Echo-Engine-native-test-haxe-ps4.pkg"
           } 2>&1 | tee ps4.log
           status=${PIPESTATUS[0]}
