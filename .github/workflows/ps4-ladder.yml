@@ -1,0 +1,74 @@
+name: "Build PS4 native test ladder (A = C, B = C++)"
+
+# Native port: tiny control programs to find out where a crash starts (the Haxe test crashes on a console).
+# A = smallest C program. B = the C++ runtime features hxcpp needs. Packages go to the "native-test" release.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ps4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          {
+            set -e
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq clang lld imagemagick >/dev/null
+            export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+            cd /tmp
+            for u in http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb \
+                     http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb; do
+              curl -fsSL "$u" -o libssl1.1.deb && break
+            done
+            sudo dpkg -i libssl1.1.deb
+            mkdir -p /tmp/tc && cd /tmp/tc
+            gh release download v0.5.4 --repo OpenOrbis/OpenOrbis-PS4-Toolchain --pattern 'toolchain-llvm-18.tar.gz'
+            tar xzf toolchain-llvm-18.tar.gz
+            export OO_PS4_TOOLCHAIN=/tmp/tc/OpenOrbis/PS4Toolchain
+            chmod +x "$OO_PS4_TOOLCHAIN"/bin/linux/*
+            git clone -q --depth 1 https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain /tmp/oo
+
+            build() { # letter title-id content-suffix libs source
+              work=/tmp/work$1/piglet
+              mkdir -p /tmp/work$1 && cp -r /tmp/oo/samples/piglet "$work" && cd "$work"
+              rm -f piglet/*.c piglet/*.cpp piglet/*.hpp piglet/*.h assets/images/rgba_texture.png
+              cp "$GITHUB_WORKSPACE/apps/ps4/ladder/$5" piglet/main.cpp
+              cp "$GITHUB_WORKSPACE/apps/ps4/ladder/ps4glue.h" piglet/
+              convert "$GITHUB_WORKSPACE/art/iconOG.png" -background none -resize 512x512 -gravity center -extent 512x512 sce_sys/icon0.png
+              sed -i \
+                -e "s/^TITLE .*/TITLE       := Echo Engine Test $1/" \
+                -e 's/^VERSION .*/VERSION     := 1.20/' \
+                -e "s/^TITLE_ID .*/TITLE_ID    := $2/" \
+                -e "s/^CONTENT_ID .*/CONTENT_ID  := IV0000-$2_00-$3/" \
+                -e "s/^LIBS .*/LIBS        := $4/" \
+                Makefile
+              make
+              cp ./*.pkg "$GITHUB_WORKSPACE/Echo-Engine-native-test-$1-ps4.pkg"
+              cd /tmp
+            }
+            build A ECHO00015 ECHOTESTA0000000 "-lc -lkernel" a.cpp
+            build B ECHO00016 ECHOTESTB0000000 "-lc -lkernel -lc++" b.cpp
+            ls -la "$GITHUB_WORKSPACE"/*.pkg
+          } 2>&1 | tee ps4.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            tr '\r' '\n' < ps4.log | grep -v 'MB / ' | tail -45 | python3 -c "import sys; t=sys.stdin.read().replace('%','%25').replace('\r','').replace('\n','%0A'); print('::error title=PS4 build failed::'+t)"
+          fi
+          exit $status
+
+      - name: Add them to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view native-test >/dev/null 2>&1 || gh release create native-test --prerelease --title "Native port tests (PS4)" --notes "Test packages for the native PS4 port. For jailbroken consoles (GoldHEN). They are experiments."
+          gh release upload native-test Echo-Engine-native-test-A-ps4.pkg Echo-Engine-native-test-B-ps4.pkg --clobber
