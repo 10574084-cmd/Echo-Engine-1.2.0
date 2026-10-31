@@ -78,6 +78,7 @@ jobs:
             make
             ls -la *.pkg
 
+            python3 -c "t=open('/tmp/work/piglet/order.txt').read(); print('::notice title=Object order::'+t.replace('%','%25').replace('\n','%0A'))"
             # what the program asks the console for (imported functions): a missing one makes the console refuse to start it
             nm -u piglet/x64/Debug/piglet.elf | awk '{print $NF}' | sort -u | tr '\n' ' ' > /tmp/imports.txt
             python3 -c "t='imports ('+str(len(open('/tmp/imports.txt').read().split()))+'): '+open('/tmp/imports.txt').read(); print('::notice title=Imports::'+t.replace('%','%25').replace('\n','%0A'))"

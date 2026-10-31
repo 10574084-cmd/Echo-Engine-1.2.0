@@ -25,15 +25,32 @@ RUNTIME=$(cat "$WORK/runtime.txt")
 rm -rf "$OUT/obj"
 
 : > "$WORK/jobs.txt"
-n=0
 # ECHO_LINKONLY=1: link everything of hxcpp but do not start it (own main() in ps4stubs.cpp): tells if the problem is loading or starting
 SKIP_MAIN='! -name __none__.cpp'
 if [ "${ECHO_LINKONLY:-}" = "1" ]; then SKIP_MAIN='! -name __main__.cpp'; fi
-for f in $(cd "$OUT" && find src -name '*.cpp' ! -name '__files__.cpp' ! -name '__lib__.cpp' $SKIP_MAIN | sort); do n=$((n+1)); echo "$OUT/$f $INT/gen$n.o" >> "$WORK/jobs.txt"; done
+ALL=""
+for f in $(cd "$OUT" && find src -name '*.cpp' ! -name '__files__.cpp' ! -name '__lib__.cpp' $SKIP_MAIN | sort); do ALL="$ALL $OUT/$f"; done
+for f in $RUNTIME; do ALL="$ALL $f"; done
+
+# Objects are linked in alphabetical order, and static constructors run in link order. Before every object there is a marker that
+# shows "[k] before <file>": the last one on the screen tells which file's static constructor crashed.
 echo "$HERE/hxtest/aaa_first.cpp $INT/aaa_first.o" >> "$WORK/jobs.txt"
 echo "$HERE/hxtest/zzz_last.cpp $INT/zzz_last.o" >> "$WORK/jobs.txt"
 echo "$HERE/hxtest/ps4stubs.cpp $INT/stubs.o" >> "$WORK/jobs.txt"
-for f in $RUNTIME; do n=$((n+1)); echo "$f $INT/rt$n.o" >> "$WORK/jobs.txt"; done
+mkdir -p "$WORK/marks"
+n=0
+: > "$WORK/order.txt"
+for f in $ALL; do
+	n=$((n+1)); k=$(printf '%02d' $n)
+	short=$(echo "$f" | sed -e "s#$OUT/##" -e "s#$H/##")
+	echo "$k $short" >> "$WORK/order.txt"
+	printf '#include "ps4glue.h"\nstruct M%s { M%s() { echo_notify("[%s] before %s"); } };\nstatic M%s m;\n' "$k" "$k" "$k" "$short" "$k" > "$WORK/marks/m$k.cpp"
+	echo "$WORK/marks/m$k.cpp $INT/o${k}_a_mark.o" >> "$WORK/jobs.txt"
+	echo "$f $INT/o${k}_b_$(basename "$f" .cpp).o" >> "$WORK/jobs.txt"
+done
+echo "objects: $n (order in order.txt)"
+cat "$WORK/order.txt" | tr '\n' ';'
+echo
 
 EXTRA=""
 if [ "${ECHO_LINKONLY:-}" = "1" ]; then EXTRA="-DECHO_LINKONLY"; fi
