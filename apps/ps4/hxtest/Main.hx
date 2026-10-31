@@ -45,5 +45,7 @@ class Main
 		notify("[7] garbage collector ok");
 
 		notify("Haxe OK: " + steps.join(" | "));
+		notify("Waiting here. Close with the PS button");
+		untyped __cpp__("echo_hang()");
 	}
 }

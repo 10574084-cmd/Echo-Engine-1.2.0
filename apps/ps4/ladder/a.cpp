@@ -5,6 +5,7 @@
 int main(void)
 {
 	echo_notify("A OK: the program started and can show notifications");
-	sleep(5);
+	echo_notify("A: waiting here. Close with the PS button");
+	echo_hang();
 	return 0;
 }

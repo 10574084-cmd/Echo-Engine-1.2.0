@@ -3,6 +3,7 @@
 #pragma once
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 extern "C" {
 	typedef struct echo_notify_request { char useless1[45]; char message[3075]; } echo_notify_request;
@@ -28,4 +29,11 @@ static inline void echo_notify(const char *text)
 	memset(&req, 0, sizeof(req));
 	strncpy(req.message, text, sizeof(req.message) - 1);
 	sceKernelSendNotificationRequest(0, &req, sizeof(req), 0);
+}
+
+// A PS4 program must not return from main(): the console reports a crash when it does. After the work is done it waits here and
+// the player closes it with the PS button.
+static inline void echo_hang(void)
+{
+	for (;;) sleep(1);
 }

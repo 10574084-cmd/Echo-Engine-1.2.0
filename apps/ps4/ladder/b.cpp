@@ -29,6 +29,7 @@ int main(void)
 	std::map<std::string, int> m;
 	for (int i = 0; i < 1000; i++) { v.push_back("n" + std::to_string(i)); m[v.back()] = i; }
 	echo_notify(("B4 ok: containers " + std::to_string(m["n999"]) + " tls=" + std::to_string(tls)).c_str());
-	sleep(5);
+	echo_notify("B5 ok: waiting here. Close with the PS button");
+	echo_hang();
 	return 0;
 }
