@@ -45,14 +45,16 @@ jobs:
             chmod +x "$OO_PS4_TOOLCHAIN"/bin/linux/*
 
             git clone -q --depth 1 https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain /tmp/oo
-            mkdir -p /tmp/work && cp -r /tmp/oo/samples/hello_world /tmp/work/hello_world
-            cd /tmp/work/hello_world
-            rm -f hello_world/*.c hello_world/*.cpp hello_world/*.h
+            # the piglet sample is the base that is known to start on a console: it brings the system modules (sce_module/*.prx)
+            # and the permissions (authinfo) that a package needs to run
+            mkdir -p /tmp/work && cp -r /tmp/oo/samples/piglet /tmp/work/piglet
+            cd /tmp/work/piglet
+            rm -f piglet/*.c piglet/*.cpp piglet/*.hpp piglet/*.h assets/images/rgba_texture.png
             convert "$GITHUB_WORKSPACE/art/iconOG.png" -background none -resize 512x512 -gravity center -extent 512x512 sce_sys/icon0.png
             found=$(find /tmp/tc /tmp/oo -name right.sprx | head -1)
             if [ -n "$found" ]; then cp "$found" sce_sys/about/right.sprx; else sed -i 's# sce_sys/about/right.sprx##' Makefile; fi
 
-            bash "$GITHUB_WORKSPACE/apps/ps4/build-hxtest.sh" /tmp/work/hello_world
+            bash "$GITHUB_WORKSPACE/apps/ps4/build-hxtest.sh" /tmp/work/piglet
 
             sed -i \
               -e 's/^TITLE .*/TITLE       := Echo Engine Native Test Haxe/' \

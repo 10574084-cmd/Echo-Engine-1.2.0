@@ -39,13 +39,14 @@ jobs:
             export OO_PS4_TOOLCHAIN=/tmp/tc/OpenOrbis/PS4Toolchain
             chmod +x "$OO_PS4_TOOLCHAIN"/bin/linux/*
 
-            # the toolchain's own hello_world sample is the project skeleton (its Makefile builds, signs and packs everything)
+            # the toolchain's piglet sample is the project skeleton (its Makefile builds, signs and packs everything, and it brings the
+            # system modules and permissions that a package needs to start on a console)
             git clone -q --depth 1 https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain /tmp/oo
-            work=/tmp/work/hello_world
-            mkdir -p /tmp/work && cp -r /tmp/oo/samples/hello_world "$work"
+            work=/tmp/work/piglet
+            mkdir -p /tmp/work && cp -r /tmp/oo/samples/piglet "$work"
             cd "$work"
-            rm -f hello_world/*.c hello_world/*.cpp hello_world/*.h
-            cp "$GITHUB_WORKSPACE/apps/ps4/main.c" hello_world/main.c
+            rm -f piglet/*.c piglet/*.cpp piglet/*.hpp piglet/*.h assets/images/rgba_texture.png
+            cp "$GITHUB_WORKSPACE/apps/ps4/main.c" piglet/main.c
             convert "$GITHUB_WORKSPACE/art/iconOG.png" -background none -resize 512x512 -gravity center -extent 512x512 sce_sys/icon0.png
 
             sed -i \

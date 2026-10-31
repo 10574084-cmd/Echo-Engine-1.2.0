@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # Builds apps/ps4/hxtest (Haxe -> C++ with hxcpp) for the PS4 with the OpenOrbis clang, and links it into eboot.bin objects.
-# Needs: OO_PS4_TOOLCHAIN, haxe + hxcpp (haxelib), clang, lld. Output: $1/hello_world/x64/Debug/*.o (ready for the sample's Makefile).
+# Needs: OO_PS4_TOOLCHAIN, haxe + hxcpp (haxelib), clang, lld. Output: $1/<name>/x64/Debug/*.o (ready for the sample's Makefile).
 set -euo pipefail
-WORK=$1                       # the copy of the OpenOrbis hello_world sample
+WORK=$1                       # the copy of the OpenOrbis piglet sample (its Makefile, sce_module, authinfo)
+PROJ=$(basename "$WORK")
 TC=$OO_PS4_TOOLCHAIN
 HERE=$(cd "$(dirname "$0")" && pwd)
 H=$(haxelib libpath hxcpp)
 OUT=$WORK/hx
-INT=$WORK/hello_world/x64/Debug
+INT=$WORK/$PROJ/x64/Debug
 mkdir -p "$INT"
 
 rm -rf "$OUT"
