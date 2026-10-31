@@ -35,7 +35,8 @@ class Main
 		objs = null;
 
 		steps.push("math=" + Math.round(Math.sqrt(2) * 1000));
-		steps.push("gc=" + (cpp.vm.Gc.run(true) == null ? "ok" : "ok"));
+		cpp.vm.Gc.run(true);
+		steps.push("gc=ok");
 
 		notify("Haxe OK: " + steps.join(" | "));
 	}
