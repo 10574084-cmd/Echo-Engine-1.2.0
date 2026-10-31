@@ -1,0 +1,19 @@
+name: PS4 probe
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          {
+            git clone -q --depth 1 https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain /tmp/oo
+            cd /tmp/oo/samples
+            echo ---- sce_module hello_world; ls -la hello_world/sce_module
+            echo ---- sce_module piglet; ls -la piglet/sce_module
+            echo ---- diff Makefile hello_world piglet; diff hello_world/Makefile piglet/Makefile | head -60
+            echo ---- piglet README; head -30 piglet/README.md
+          } > probe.txt 2>&1
+          python3 -c "t=open('probe.txt').read().replace('%','%25').replace('\n','%0A'); print('::notice title=probe::'+t)"
