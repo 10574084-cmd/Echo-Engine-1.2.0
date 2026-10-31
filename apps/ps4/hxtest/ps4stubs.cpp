@@ -3,6 +3,10 @@
 #include <signal.h>
 #include <unistd.h>
 
+#ifndef SA_SIGINFO
+#define SA_SIGINFO 0x0040 // the FreeBSD value
+#endif
+
 extern "C" {
 	// libc++abi asks for this to run destructors of thread_local objects when a thread ends. Not needed here.
 	int __cxa_thread_atexit_impl(void (*dtor)(void *), void *obj, void *dso_symbol)
@@ -38,7 +42,7 @@ __attribute__((constructor(101))) static void echoInstallCrashReporter()
 {
 	struct sigaction sa;
 	memset(&sa, 0, sizeof(sa));
-	sa.sa_sigaction = echoCrash;
+	sa.__sa_handler.__sa_sigaction = echoCrash; // (the toolchain's sa_sigaction macro points at a member that does not exist)
 	sa.sa_flags = SA_SIGINFO;
 	sigaction(SIGSEGV, &sa, 0);
 	sigaction(SIGBUS, &sa, 0);
