@@ -28,7 +28,7 @@ for f in $RUNTIME; do n=$((n+1)); echo "$H/$f $INT/rt$n.o" >> "$WORK/jobs.txt"; 
 
 FLAGS="--target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c -O2 -w -std=c++11 -frtti -fexceptions -fcxx-exceptions \
  -isysroot $TC -isystem $TC/include -isystem $TC/include/c++/v1 -I$OUT/include -I$H/include \
- -DHX_LINUX -DHXCPP_M64 -DHXCPP_VISIT_ALLOCS -DHX_SMART_STRINGS -DHXCPP_API_LEVEL=430 -Wno-invalid-offsetof"
+ -D_GNU_SOURCE -DHX_LINUX -DHXCPP_M64 -DHXCPP_VISIT_ALLOCS -DHX_SMART_STRINGS -DHXCPP_API_LEVEL=430 -Wno-invalid-offsetof"
 export FLAGS
 set +e
 cat "$WORK/jobs.txt" | xargs -P 4 -L 1 sh -c 'clang++ $FLAGS -x c++ "$0" -o "$1" 2>&1 || { echo "FAILED: $0"; exit 255; }' > "$WORK/compile.log" 2>&1
