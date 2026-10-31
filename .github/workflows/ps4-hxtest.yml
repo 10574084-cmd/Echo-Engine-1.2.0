@@ -72,6 +72,11 @@ jobs:
             make
             ls -la *.pkg
 
+            # what the program asks the console for (imported functions): a missing one makes the console refuse to start it
+            nm -u piglet/x64/Debug/piglet.elf | awk '{print $NF}' | sort -u | tr '\n' ' ' > /tmp/imports.txt
+            python3 -c "t='imports ('+str(len(open('/tmp/imports.txt').read().split()))+'): '+open('/tmp/imports.txt').read(); print('::notice title=Imports::'+t.replace('%','%25').replace('\n','%0A'))"
+            readelf -lW piglet/x64/Debug/piglet.elf | grep -E "LOAD|TLS|DYNAMIC|Entry|Type" | head -20 || true
+
             # symbols: lets a crash report (addresses relative to echo_anchor) be turned into function names
             nm -n piglet/x64/Debug/piglet.elf > /tmp/symbols.txt || true
             python3 "$GITHUB_WORKSPACE/apps/ps4/lookup.py" /tmp/symbols.txt "${{ inputs.deltas }}" | tee /tmp/lookup.txt
