@@ -20,3 +20,11 @@ Goal: run Echo Engine as a native program on a jailbroken PS4 (GoldHEN), built w
 `Echo-Engine-native-test-graphics-ps4.pkg` = OpenOrbis' `piglet` sample (OpenGL ES 2 on the PS4) with the Echo Engine icon as
 its texture. Built by `ps4-native-test.yml`. If it shows the icon on a console, the graphics side can work.
 To read the console log (klog) with GoldHEN: from a PC on the same network run `nc <PS4 IP> 9081`.
+
+## Step 2b: Haxe on the PS4 (release "native-test")
+
+`Echo-Engine-native-test-haxe-ps4.pkg`: a small Haxe program (arrays, maps, JSON, strings, allocation, GC) compiled to C++ by hxcpp and
+built with the OpenOrbis clang (`apps/ps4/build-hxtest.sh`, workflow `ps4-hxtest.yml`). It shows two toast notifications:
+"Haxe is starting" and then "Haxe OK: sort=1,3,5,9 | map=144 | json=echo3 | str=0;1.5;3;4.5;6; | alloc=20000 | math=1414 | gc=ok".
+Only "starting" = it crashed in between (the klog says where). Nothing = it did not start.
+Needed for it to build: `-D_GNU_SOURCE`, the hxcpp runtime file list (taken from a real Linux build) and a stub for `__cxa_thread_atexit_impl`.
