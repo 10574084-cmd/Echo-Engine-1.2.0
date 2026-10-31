@@ -14,17 +14,19 @@ rm -rf "$OUT"
 ( cd "$HERE/hxtest" && haxe -cp . -cpp "$OUT" -main Main -D HXCPP_M64 -D no-compilation )
 cp "$HERE/hxtest/ps4glue.h" "$OUT/include/"
 
-# the sources that hxcpp itself compiles on Linux (taken from a real Linux build with -verbose)
-RUNTIME="src/Array.cpp src/Dynamic.cpp src/Enum.cpp src/Math.cpp src/String.cpp src/cpp/encoding/Encodings.cpp
- src/hx/Anon.cpp src/hx/Boot.cpp src/hx/CFFI.cpp src/hx/Class.cpp src/hx/Date.cpp src/hx/Debug.cpp src/hx/Hash.cpp src/hx/Lib.cpp
- src/hx/NoFiles.cpp src/hx/Object.cpp src/hx/StdLibs.cpp src/hx/Thread.cpp src/hx/gc/GcCommon.cpp src/hx/gc/GcRegCapture.cpp
- src/hx/gc/Immix.cpp src/hx/thread/ConditionVariable.cpp src/hx/thread/CountingSemaphore.posix.cpp src/hx/thread/RecursiveMutex.cpp
- src/hx/thread/Scratch.cpp src/hx/thread/ThreadImpl.cpp src/hx/thread/ThreadImpl.noop.cpp src/hx/thread/ThreadLocal.cpp"
+# The runtime sources hxcpp compiles on Linux: take the list from a real Linux build of the same program (-verbose prints every
+# compiler call). Only the compiling matters here, the Linux link may fail (it lacks the PS4 notification function).
+( cd "$OUT" && haxelib run hxcpp Build.xml -verbose -DHXCPP_M64 > "$WORK/linux-build.log" 2>&1 || true )
+sed 's/\x1b\[[0-9;]*m//g' "$WORK/linux-build.log" | grep "Running command: g++" | grep -o "[^ ]*\.cpp" | grep -v "^\./src/" | sort -u > "$WORK/runtime.txt"
+echo "hxcpp runtime sources: $(wc -l < "$WORK/runtime.txt")"
+test "$(wc -l < "$WORK/runtime.txt")" -gt 15
+RUNTIME=$(cat "$WORK/runtime.txt")
+rm -rf "$OUT/obj"
 
 : > "$WORK/jobs.txt"
 n=0
 for f in $(cd "$OUT" && find src -name '*.cpp' | sort); do n=$((n+1)); echo "$OUT/$f $INT/gen$n.o" >> "$WORK/jobs.txt"; done
-for f in $RUNTIME; do n=$((n+1)); echo "$H/$f $INT/rt$n.o" >> "$WORK/jobs.txt"; done
+for f in $RUNTIME; do n=$((n+1)); echo "$f $INT/rt$n.o" >> "$WORK/jobs.txt"; done
 
 FLAGS="--target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c -O2 -w -std=c++11 -frtti -fexceptions -fcxx-exceptions \
  -isysroot $TC -isystem $TC/include -isystem $TC/include/c++/v1 -I$OUT/include -I$H/include \
