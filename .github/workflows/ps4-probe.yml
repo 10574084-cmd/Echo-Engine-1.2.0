@@ -16,5 +16,5 @@ jobs:
             echo ---- sce_module piglet; ls -la piglet/sce_module
             echo ---- diff Makefile hello_world piglet; diff hello_world/Makefile piglet/Makefile | head -60 || true
             echo ---- piglet README; head -30 piglet/README.md || true
-          } > probe.txt 2>&1 || true
-          python3 -c "t=open('probe.txt').read().replace('%','%25').replace('\n','%0A'); print('::notice title=probe::'+t)"
+          } > /tmp/probe.txt 2>&1 || true
+          python3 -c "t=open('/tmp/probe.txt').read().replace('%','%25').replace('\n','%0A'); print('::notice title=probe::'+t)"
