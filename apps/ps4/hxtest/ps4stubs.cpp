@@ -58,3 +58,15 @@ struct EchoSignOfLife
 	EchoSignOfLife() { echo_notify("[0] C++ loaded (before main)"); }
 };
 static EchoSignOfLife echoSignOfLife;
+
+#ifdef ECHO_LINKONLY
+// test C: everything of hxcpp is linked in, but nothing of it is started
+extern "C" void __hxcpp_main() {}
+extern "C" void __hxcpp_lib_main() {}
+int main(void)
+{
+	echo_notify("C ok: the program with all of hxcpp inside loaded (hxcpp not started)");
+	echo_hang();
+	return 0;
+}
+#endif

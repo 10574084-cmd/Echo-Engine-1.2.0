@@ -26,11 +26,16 @@ rm -rf "$OUT/obj"
 
 : > "$WORK/jobs.txt"
 n=0
-for f in $(cd "$OUT" && find src -name '*.cpp' ! -name '__files__.cpp' ! -name '__lib__.cpp' | sort); do n=$((n+1)); echo "$OUT/$f $INT/gen$n.o" >> "$WORK/jobs.txt"; done
+# ECHO_LINKONLY=1: link everything of hxcpp but do not start it (own main() in ps4stubs.cpp): tells if the problem is loading or starting
+SKIP_MAIN='! -name __none__.cpp'
+if [ "${ECHO_LINKONLY:-}" = "1" ]; then SKIP_MAIN='! -name __main__.cpp'; fi
+for f in $(cd "$OUT" && find src -name '*.cpp' ! -name '__files__.cpp' ! -name '__lib__.cpp' $SKIP_MAIN | sort); do n=$((n+1)); echo "$OUT/$f $INT/gen$n.o" >> "$WORK/jobs.txt"; done
 n=$((n+1)); echo "$HERE/hxtest/ps4stubs.cpp $INT/stubs$n.o" >> "$WORK/jobs.txt"
 for f in $RUNTIME; do n=$((n+1)); echo "$f $INT/rt$n.o" >> "$WORK/jobs.txt"; done
 
-FLAGS="--target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c -O2 -fno-omit-frame-pointer -w -std=c++11 -frtti -fexceptions -fcxx-exceptions \
+EXTRA=""
+if [ "${ECHO_LINKONLY:-}" = "1" ]; then EXTRA="-DECHO_LINKONLY"; fi
+FLAGS="$EXTRA --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c -O2 -fno-omit-frame-pointer -w -std=c++11 -frtti -fexceptions -fcxx-exceptions \
  -isysroot $TC -isystem $TC/include -isystem $TC/include/c++/v1 -I$OUT/include -I$H/include \
  -D_GNU_SOURCE -DHX_LINUX -DHXCPP_M64 -DHXCPP_VISIT_ALLOCS -DHX_SMART_STRINGS -DHXCPP_API_LEVEL=430 -Wno-invalid-offsetof"
 export FLAGS
