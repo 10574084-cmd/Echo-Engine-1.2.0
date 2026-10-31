@@ -1,0 +1,19 @@
+name: PS4 probe
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          mkdir -p /tmp/tc && cd /tmp/tc
+          gh release download v0.5.4 --repo OpenOrbis/OpenOrbis-PS4-Toolchain --pattern 'toolchain-llvm-18.tar.gz' >/dev/null 2>&1
+          tar xzf toolchain-llvm-18.tar.gz
+          T=/tmp/tc/OpenOrbis/PS4Toolchain/include
+          { sed -n 100,175p $T/signal.h; echo ----; grep -n "sigaction\|SA_SIGINFO\|SIGSEGV" $T/signal.h | head -20; echo ----; grep -rn "mc_rip\|REG_RIP" $T/sys/ucontext.h $T/ucontext.h $T/sys/_ucontext.h $T/machine/ucontext.h 2>/dev/null | head -5; } > /tmp/probe.txt 2>&1
+          python3 -c "t=open('/tmp/probe.txt').read().replace('%','%25').replace('\n','%0A'); print('::notice title=probe::'+t)"
