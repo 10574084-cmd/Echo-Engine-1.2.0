@@ -30,7 +30,9 @@ n=0
 SKIP_MAIN='! -name __none__.cpp'
 if [ "${ECHO_LINKONLY:-}" = "1" ]; then SKIP_MAIN='! -name __main__.cpp'; fi
 for f in $(cd "$OUT" && find src -name '*.cpp' ! -name '__files__.cpp' ! -name '__lib__.cpp' $SKIP_MAIN | sort); do n=$((n+1)); echo "$OUT/$f $INT/gen$n.o" >> "$WORK/jobs.txt"; done
-n=$((n+1)); echo "$HERE/hxtest/ps4stubs.cpp $INT/stubs$n.o" >> "$WORK/jobs.txt"
+echo "$HERE/hxtest/aaa_first.cpp $INT/aaa_first.o" >> "$WORK/jobs.txt"
+echo "$HERE/hxtest/zzz_last.cpp $INT/zzz_last.o" >> "$WORK/jobs.txt"
+echo "$HERE/hxtest/ps4stubs.cpp $INT/stubs.o" >> "$WORK/jobs.txt"
 for f in $RUNTIME; do n=$((n+1)); echo "$f $INT/rt$n.o" >> "$WORK/jobs.txt"; done
 
 EXTRA=""
