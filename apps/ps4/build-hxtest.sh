@@ -42,9 +42,9 @@ n=0
 : > "$WORK/order.txt"
 for f in $ALL; do
 	n=$((n+1)); k=$(printf '%02d' $n)
-	short=$(echo "$f" | sed -e "s#$OUT/##" -e "s#$H/##")
+	short=$(echo "$f" | sed -e 's#.*/src/#src/#')
 	echo "$k $short" >> "$WORK/order.txt"
-	printf '#include "ps4glue.h"\nstruct M%s { M%s() { echo_notify("[%s] before %s"); } };\nstatic M%s m;\n' "$k" "$k" "$k" "$short" "$k" > "$WORK/marks/m$k.cpp"
+	printf '#include "ps4glue.h"\nstruct M%s { M%s() { echo_notify("[%s] before %s"); sleep(1); } };\nstatic M%s m;\n' "$k" "$k" "$k" "$short" "$k" > "$WORK/marks/m$k.cpp"
 	echo "$WORK/marks/m$k.cpp $INT/o${k}_a_mark.o" >> "$WORK/jobs.txt"
 	echo "$f $INT/o${k}_b_$(basename "$f" .cpp).o" >> "$WORK/jobs.txt"
 done
