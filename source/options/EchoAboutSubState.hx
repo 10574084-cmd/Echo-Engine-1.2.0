@@ -13,6 +13,8 @@ CREDITS
 - Echo Engine: project and web port, with development assistance from Claude.
 - Psych Engine: Shadow Mario, Riveren and the Psych Engine contributors.
 - Friday Night Funkin\': ninjamuffin99, PhantomArcade, evilsk8r and kawaisprite.
+- Mobile HUD: based on the "FNF Mobile HUD" mod by SoyKaity778 (credit to the author).
+- Pico Mix: mod that adds the Pico mixes of the base game to Psych Engine (credit to its authors).
 - Libraries: HaxeFlixel, OpenFL and Lime (MIT), flxanimate (MIT),
   PeerJS for the online mode (MIT).
 

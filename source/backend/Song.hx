@@ -144,6 +144,9 @@ class Song
 
 	public static function parseJSONshit(rawJson:String):SwagSong
 	{
-		return cast Json.parse(rawJson).song;
+		var parsed:Dynamic = Json.parse(rawJson);
+		// charts in the newer "flat" format (like the ones of Pico Mix) have the song's name in "song" and everything else at the root
+		if (parsed.song == null || Std.isOfType(parsed.song, String)) return cast parsed;
+		return cast parsed.song;
 	}
 }

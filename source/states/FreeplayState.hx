@@ -62,6 +62,7 @@ class FreeplayState extends MusicBeatState
 		DiscordClient.changePresence("In the Menus", null);
 		#end
 
+		for (pass in 0...2) {
 		for (i in 0...WeekData.weeksList.length) {
 			if(weekIsLocked(WeekData.weeksList[i])) continue;
 
@@ -89,6 +90,11 @@ class FreeplayState extends MusicBeatState
 				}
 				addSong(song[0], i, song[1], FlxColor.fromRGB(colors[0], colors[1], colors[2]));
 			}
+		}
+		// the chosen mixes left the list empty (e.g. the mod is disabled or was removed): show everything instead of crashing
+		if (songs.length > 0 || ClientPrefs.data.echoMix == 'All') break;
+		ClientPrefs.data.echoMix = 'All';
+		ClientPrefs.saveSettings();
 		}
 		Mods.loadTopMod();
 

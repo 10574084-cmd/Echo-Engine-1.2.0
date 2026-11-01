@@ -217,6 +217,8 @@ class EchoLang
 		'Which mixes?' => 'Cuales mixes?',
 		'UP / DOWN: choose    ENTER: accept    BACK: cancel' => 'ARRIBA / ABAJO: elegir    ENTER: aceptar    ATRAS: cancelar',
 		'Pico Mix is not installed yet: choosing this downloads it (about 160 MB).' => 'Pico Mix todavia no esta instalado: al elegirlo se descarga (unos 160 MB).',
+		'Mobile HUD' => 'HUD para movil',
+		'A phone-friendly layout: your notes where your thumbs reach, no opponent notes,\nshort score, pause button. Based on the "FNF Mobile HUD" mod by SoyKaity778.' => 'Diseno para telefono: tus notas donde llegan los pulgares, sin notas del oponente,\npuntaje corto y boton de pausa. Basado en el mod "FNF Mobile HUD" de SoyKaity778.',
 		'Language' => 'Idioma',
 		'Shaders ' => 'Shaders',
 		'Changes the language of the menus. Auto follows your browser.\nReopen the menu to see it changed (songs, mods and the main menu pictures stay in English).' => 'Cambia el idioma de los menus. Auto sigue el de tu navegador.\nVuelve a abrir el menu para verlo cambiado (las canciones, los mods y las imagenes del menu principal siguen en ingles).',

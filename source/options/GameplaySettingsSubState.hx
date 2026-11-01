@@ -20,6 +20,12 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 			'bool');
 		addOption(option);
 
+		var option:Option = new Option('Mobile HUD',
+			'A phone-friendly layout: your notes where your thumbs reach, no opponent notes,\nshort score, pause button. Based on the "FNF Mobile HUD" mod by SoyKaity778.',
+			'mobileHud',
+			'bool');
+		addOption(option);
+
 		var option:Option = new Option('Opponent Notes',
 			'If unchecked, opponent notes get hidden.',
 			'opponentStrums',

@@ -94,6 +94,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: bash tools/add_builtin.sh export/release/html5/bin
 
+      # List of every file with its hash: the PC and Android apps use it to update themselves (only what changed).
+      - name: Write the update list
+        run: python3 tools/make_update_manifest.py export/release/html5/bin "$(grep -oP "VERSION = '\K[0-9.]+" source/echo/EchoInfo.hx)"
+
       - name: Check the build
         run: |
           cd export/release/html5/bin

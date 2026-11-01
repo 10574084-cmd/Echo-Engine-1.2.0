@@ -179,6 +179,7 @@ class PlayState extends MusicBeatState
 
 	public var healthBar:Bar;
 	public var timeBar:Bar;
+	public var mobileHud:echo.EchoMobileHud = null; // phone layout (Echo option)
 	var songPercent:Float = 0;
 
 	public var ratingsData:Array<Rating> = Rating.loadDefault();
@@ -218,7 +219,7 @@ class PlayState extends MusicBeatState
 	var echoInfoTimer:Float = 0;
 	var echoStartStamp:Float = -1;
 	var echoStatsDone:Bool = false;
-	var timeTxt:FlxText;
+	public var timeTxt:FlxText;
 	var scoreTxtTween:FlxTween;
 
 	public static var campaignScore:Int = 0;
@@ -580,6 +581,11 @@ class PlayState extends MusicBeatState
 		scoreTxt.borderSize = 1.25;
 		scoreTxt.visible = !ClientPrefs.data.hideHud;
 		updateScore(false);
+		if (echo.EchoMobileHud.enabled())
+		{
+			mobileHud = new echo.EchoMobileHud(this);
+			mobileHud.create();
+		}
 		uiGroup.add(scoreTxt);
 
 		if(ClientPrefs.data.echoModNotice)
@@ -751,6 +757,7 @@ class PlayState extends MusicBeatState
 	public function reloadHealthBarColors() {
 		healthBar.setColors(FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]),
 			FlxColor.fromRGB(boyfriend.healthColorArray[0], boyfriend.healthColorArray[1], boyfriend.healthColorArray[2]));
+		if (echo.EchoMobileHud.enabled()) healthBar.setColors(0xFFFE0101, 0xFF64FF36); // Mobile HUD: red / green
 	}
 
 	public function addCharacterToList(newCharacter:String, type:Int) {
@@ -1000,6 +1007,7 @@ class PlayState extends MusicBeatState
 
 			generateStaticArrows(0);
 			generateStaticArrows(1);
+			if (mobileHud != null) mobileHud.arrows();
 			for (i in 0...playerStrums.length) {
 				setOnScripts('defaultPlayerStrumX' + i, playerStrums.members[i].x);
 				setOnScripts('defaultPlayerStrumY' + i, playerStrums.members[i].y);
@@ -1177,6 +1185,7 @@ class PlayState extends MusicBeatState
 		// "tempScore" variable is used to prevent another memory leak, just in case
 		// "\n" here prevents the text from being cut off by beat zooms
 		scoreTxt.text = '${tempScore}\n';
+		if (mobileHud != null) mobileHud.updateScore();
 
 		if (!miss && !cpuControlled)
 			doScoreBop();
@@ -1843,6 +1852,7 @@ class PlayState extends MusicBeatState
 				var dunceNote:Note = unspawnNotes[0];
 				notes.insert(0, dunceNote);
 				dunceNote.spawned = true;
+				if (mobileHud != null) mobileHud.spawn(dunceNote);
 
 				callOnLuas('onSpawnNote', [notes.members.indexOf(dunceNote), dunceNote.noteData, dunceNote.noteType, dunceNote.isSustainNote, dunceNote.strumTime]);
 				callOnHScript('onSpawnNote', [dunceNote]);
@@ -1924,6 +1934,7 @@ class PlayState extends MusicBeatState
 		setOnScripts('cameraX', camFollow.x);
 		setOnScripts('cameraY', camFollow.y);
 		setOnScripts('botPlay', cpuControlled);
+		if (mobileHud != null) mobileHud.update(elapsed);
 		callOnScripts('onUpdatePost', [elapsed]);
 	}
 

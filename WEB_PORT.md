@@ -107,6 +107,23 @@ El mismo juego de la web, empaquetado como app. No hay una versión nueva del c�
 - **Android:** un APK (se instala desde el archivo; hay que permitir instalar apps de orígenes desconocidos). Va en horizontal y a pantalla completa.
 - **Cómo se generan:** en GitHub, `Actions > Build apps (PC and Android) > Run workflow`. Al terminar queda todo en `Releases` (v1.2.0, etc.). Está en `.github/workflows/apps.yml`; el código de las envolturas está en `apps/`.
 
+### Actualización automática de las apps
+
+Las apps se actualizan solas con lo que haya en la web (la página siempre es la última versión). La web publica `update.json`: la lista de todos los archivos del juego con su SHA-256 (lo genera `tools/make_update_manifest.py` en cada compilación).
+
+- **PC:** unos segundos después de abrir el juego (y cada 6 horas) la app descarga `update.json`, baja **solo los archivos que cambiaron** a su carpeta de datos, comprueba el hash de cada uno y avisa "Reiniciar ahora / Más tarde". Al reiniciar usa esos archivos en vez de los que traía. Si se corta la descarga no pasa nada: el cambio solo se aplica cuando todo está completo (`apps/desktop/main.js`).
+- **Android:** igual, pero **solo con Wi-Fi** (o cable), nunca con datos móviles (plugin `@capacitor/network`). Guarda los archivos nuevos en el almacenamiento de la app y un service worker (`webshim/html5/echo-sw.js`) los sirve la próxima vez que se abre. Avisa con un mensaje "cierra y abre el juego". Si una actualización hiciera que el juego no arranca 3 veces seguidas, la app descarta lo descargado y vuelve a los archivos con los que se instaló (`webshim/html5/echo-update.js`).
+- Las partidas y los mods instalados no se tocan (viven en el almacenamiento del navegador de la app).
+- Esto actualiza el **juego**. Cambiar la propia envoltura (el .exe o el APK) sigue pidiendo bajar la release nueva.
+
+## Pico Mix, Mixes en Freeplay y HUD móvil
+
+- **Pico Mix** viene con el juego: la release `CLAUDE` de este repositorio tiene `pico_mix_psych_port.zip`; en cada compilación `tools/add_builtin.sh` lo descarga, lo extrae en `builtin/` y genera `builtin/index.json`. No se instala solo (pesa unos 160 MB): se descarga la primera vez que el jugador lo elige.
+- **TAB en Freeplay** abre el menú "Which mixes?": *BF Mixes*, *Pico Mixes* o *Everything*. Si Pico Mix no está instalado, elegirlo lo descarga e instala.
+- Los charts de Pico Mix están en el formato nuevo de Psych (sin el campo `song` envolvente); el cargador (`Song.parseJSONshit`) acepta los dos formatos.
+- Los scripts Lua de Pico Mix (Nene/Abot, efectos de los stages erect, eventos) no corren en la web; los charts, personajes y stages sí.
+- **HUD móvil** (Opciones > Gameplay > *Mobile HUD*): basado en el mod "FNF Mobile HUD" de **SoyKaity778** (créditos al autor). Es una recreación nativa de lo principal (notas del rival ocultas, tus notas donde llegan los pulgares, puntaje corto, barra de vida roja/verde, botón de pausa). El script original es Lua y no corre en la web.
+
 ## Seguridad (qué cubre y qué no)
 
 Todo el juego corre en el navegador de cada persona, así que **nada del código del cliente puede ser inviolable**: quien controle su navegador (extensión, userscript, herramientas de desarrollo) puede cambiar lo que ocurre *en su propia copia*. Lo que se hizo:

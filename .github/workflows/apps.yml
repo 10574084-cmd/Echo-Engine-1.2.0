@@ -61,6 +61,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: bash tools/add_builtin.sh export/release/html5/bin
 
+      # List of every file with its hash: the PC and Android apps use it to update themselves (only what changed).
+      - name: Write the update list
+        run: python3 tools/make_update_manifest.py export/release/html5/bin "$(grep -oP "VERSION = '\K[0-9.]+" source/echo/EchoInfo.hx)"
+
       - name: Check the build and read the version
         id: ver
         run: |
@@ -172,7 +176,7 @@ jobs:
           cp capacitor.config.json build/
           cd build
           npm init -y >/dev/null
-          npm install --no-audit --no-fund @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+          npm install --no-audit --no-fund @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/network@6
           npx cap add android
           npx cap sync android
           bash ../patch.sh
