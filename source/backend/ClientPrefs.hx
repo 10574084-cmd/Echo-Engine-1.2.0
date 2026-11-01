@@ -92,6 +92,7 @@ import states.TitleState;
 	public var echoShaderSongsOnly:Bool = false;
 	public var echoLang:String = 'Auto'; // menu language: Auto (browser), English, Español
 	public var echoNoteRGB:String = 'Auto'; // note color shader: Auto (the song decides), On, Off
+	public var echoMix:String = 'All'; // Freeplay (TAB): All, BF (without the Pico mixes) or Pico (only the Pico mixes)
 	public var echoModNotice:Bool = true; // warn when a mod uses scripts or shaders (not available on the web)
 	public var echoTitleAnim:Bool = true; // title screen: the logo drops to the middle while Girlfriend blurs
 	public var echoLive:Bool = true; // Echo Live announcements (countdown + everybody joins a song)

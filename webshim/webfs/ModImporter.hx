@@ -74,6 +74,28 @@ class ModImporter
 		});
 	}
 
+	/** Installs a mod whose files were downloaded one by one (built-in mods): the same steps as importing a zip. */
+	public static function installFiles(mod:String, files:Map<String, Bytes>, done:ImportResult->Void):Void
+	{
+		var toSave:Map<String, Bytes> = new Map();
+		var count = 0;
+		for (path => data in files)
+		{
+			toSave.set('mods/$mod/$path', data);
+			count++;
+		}
+		VirtualFS.deleteDirectoryRecursive('mods/$mod');
+		VirtualFS.saveMany(toSave);
+		backend.Mods.updatedOnState = false; // rescan: the new mod shows up in the list
+
+		var result:ImportResult = {mods: [mod], files: count};
+		FontLoader.registerAll(function()
+		{
+			for (callback in onImported.copy()) callback(result);
+			done(result);
+		});
+	}
+
 	/** Removes a mod (all of its files). */
 	public static function deleteMod(folder:String):Void
 	{

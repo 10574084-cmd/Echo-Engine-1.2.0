@@ -78,6 +78,10 @@ class FreeplayState extends MusicBeatState
 			WeekData.setDirectoryFromWeek(leWeek);
 			for (song in leWeek.songs)
 			{
+				// TAB menu: BF mixes / Pico mixes
+				var pico:Bool = echo.EchoBuiltin.isPicoSong(song[0]);
+				if ((ClientPrefs.data.echoMix == 'BF' && pico) || (ClientPrefs.data.echoMix == 'Pico' && !pico)) continue;
+
 				var colors:Array<Int> = song[2];
 				if(colors == null || colors.length < 3)
 				{
@@ -160,7 +164,7 @@ class FreeplayState extends MusicBeatState
 		bottomBG.alpha = 0.6;
 		add(bottomBG);
 
-		var leText:String = "Press SPACE to listen to the Song / Press CTRL to open the Gameplay Changers Menu / Press RESET to Reset your Score and Accuracy.";
+		var leText:String = "Press SPACE to listen to the Song / CTRL: Gameplay Changers / TAB: Pico or BF Mixes / RESET: Reset your Score.";
 		bottomString = leText;
 		var size:Int = 16;
 		bottomText = new FlxText(bottomBG.x, bottomBG.y + 4, FlxG.width, leText, size);
@@ -537,7 +541,12 @@ class FreeplayState extends MusicBeatState
 			}
 		}
 
-		if(FlxG.keys.justPressed.CONTROL && !player.playingMusic #if html5 && !online.Session.active #end)
+		if(FlxG.keys.justPressed.TAB && !player.playingMusic #if html5 && !online.Session.active #end)
+		{
+			persistentUpdate = false;
+			openSubState(new substates.EchoMixSubState());
+		}
+		else if(FlxG.keys.justPressed.CONTROL && !player.playingMusic #if html5 && !online.Session.active #end)
 		{
 			persistentUpdate = false;
 			openSubState(new GameplayChangersSubstate());

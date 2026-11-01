@@ -88,6 +88,12 @@ jobs:
           echo "::notice title=PeerJS sha384::$sum"
           if [ -n "$PEERJS_SHA384" ] && [ "$sum" != "$PEERJS_SHA384" ]; then echo "PeerJS changed: $sum"; exit 1; fi
 
+      # Mods that come with the game (Pico Mix): published next to it so the player installs them with one button.
+      - name: Add built-in mods
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tools/add_builtin.sh export/release/html5/bin
+
       - name: Check the build
         run: |
           cd export/release/html5/bin
