@@ -26,7 +26,7 @@ class MediaDecoder
 	 * Sounds created from virtual files, keyed by path. The loading screen preloads a song's audio and the engine asks for it
 	 * again once the song starts (after Paths cleared its own caches), so this cache has to outlive Paths' bookkeeping:
 	 * a new Sound would start unloaded and report a length of 0.
-	 * It only keeps the most recently used files, every one of them holds the whole file as a base64 string.
+	 * It only keeps the most recently used files, every one of them holds the whole file (and its decoded audio).
 	 */
 	static var sounds:Map<String, Sound> = new Map();
 	static var recent:Array<String> = [];
@@ -78,19 +78,59 @@ class MediaDecoder
 
 		try
 		{
-			var buffer = AudioBuffer.fromBytes(VirtualFS.getBytes(path));
+			var bytes = VirtualFS.getBytes(path);
+			if (bytes == null) return null;
+			var buffer = makeBuffer(path, bytes);
 			if (buffer == null) return null;
 			sound = Sound.fromAudioBuffer(buffer);
 			sounds.set(path, sound);
 			recent.push(path);
 			while (recent.length > MAX_CACHED_SOUNDS)
-				sounds.remove(recent.shift());
+				forget(recent.shift());
 			return sound;
 		}
 		catch (e:Dynamic)
 		{
 			trace('Could not create sound "$path": $e');
 			return null;
+		}
+	}
+
+	static var urls:Map<String, String> = new Map();
+
+	/**
+	 * Lime's AudioBuffer.fromBytes makes a streaming HTML5 <audio> element (html5: true). Song, voices and the opponent's voices are three
+	 * of those playing at once, and they drift apart, start late or stay silent. The game's own songs use Web Audio (the file is decoded
+	 * into memory, exact seeking and starting), so mod sounds are made the same way: a Howl in Web Audio mode that reads a blob: URL.
+	 */
+	static function makeBuffer(path:String, bytes:Bytes):AudioBuffer
+	{
+		var ext = path.substr(path.lastIndexOf(".") + 1).toLowerCase();
+		var mime = switch (ext)
+		{
+			case "mp3": "audio/mpeg";
+			case "wav": "audio/wav";
+			default: "audio/ogg";
+		};
+		if (ext != "mp3" && ext != "wav") ext = "ogg";
+
+		var blob = new js.html.Blob([bytes.getData()], {type: mime});
+		var url = js.html.URL.createObjectURL(blob);
+		urls.set(path, url);
+
+		var buffer = new AudioBuffer();
+		buffer.src = js.Syntax.code("new Howl({src: [{0}], format: [{1}], html5: false, preload: false})", url, ext);
+		return buffer;
+	}
+
+	static function forget(path:String):Void
+	{
+		sounds.remove(path);
+		var url = urls.get(path);
+		if (url != null)
+		{
+			js.html.URL.revokeObjectURL(url);
+			urls.remove(path);
 		}
 	}
 
@@ -145,6 +185,7 @@ class MediaDecoder
 	/** Forgets every cached sound (they are decoded again from the stored files when needed). */
 	public static function releaseAll():Void
 	{
+		for (path in [for (p in urls.keys()) p]) forget(path);
 		sounds.clear();
 		recent = [];
 	}
@@ -153,7 +194,7 @@ class MediaDecoder
 	public static function releaseSound(path:String):Void
 	{
 		path = VirtualFS.normalize(path);
-		sounds.remove(path);
+		forget(path);
 		recent.remove(path);
 	}
 }
