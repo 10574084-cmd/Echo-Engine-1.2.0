@@ -12,7 +12,7 @@ import flixel.FlxBasic;
 import flixel.FlxObject;
 import flixel.addons.transition.FlxTransitionableState;
 
-#if (!flash && sys)
+#if (!flash && (sys || html5))
 import flixel.addons.display.FlxRuntimeShader;
 #end
 
@@ -1697,7 +1697,7 @@ class FunkinLua {
 		Lua_helper.add_callback(lua, name, null); //just so that it gets called
 	}
 
-	#if (MODS_ALLOWED && !flash && sys)
+	#if (MODS_ALLOWED && !flash && (sys || html5))
 	public var runtimeShaders:Map<String, Array<String>> = new Map<String, Array<String>>();
 	#end
 
@@ -1705,7 +1705,7 @@ class FunkinLua {
 	{
 		if(!ClientPrefs.data.shaders) return false;
 
-		#if (MODS_ALLOWED && !flash && sys)
+		#if (MODS_ALLOWED && !flash && (sys || html5))
 		if(runtimeShaders.exists(name))
 		{
 			luaTrace('Shader $name was already initialized!');

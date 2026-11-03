@@ -750,7 +750,7 @@ class PlayState extends MusicBeatState
 		});
 		luaDebugGroup.add(newText);
 
-		Sys.println(text);
+		#if sys Sys.println(text); #else trace(text); #end
 	}
 	#end
 
@@ -3325,6 +3325,7 @@ class PlayState extends MusicBeatState
 	#if LUA_ALLOWED
 	public function startLuasNamed(luaFile:String)
 	{
+		if (!ClientPrefs.data.modScripts) return false; // Gameplay option: mod scripts off
 		#if MODS_ALLOWED
 		var luaToLoad:String = Paths.modFolders(luaFile);
 		if(!FileSystem.exists(luaToLoad))
@@ -3649,13 +3650,13 @@ class PlayState extends MusicBeatState
 	}
 	#end
 
-	#if (!flash && sys)
+	#if (!flash && (sys || html5))
 	public var runtimeShaders:Map<String, Array<String>> = new Map<String, Array<String>>();
 	public function createRuntimeShader(name:String):FlxRuntimeShader
 	{
 		if(!ClientPrefs.data.shaders) return new FlxRuntimeShader();
 
-		#if (!flash && MODS_ALLOWED && sys)
+		#if (!flash && MODS_ALLOWED && (sys || html5))
 		if(!runtimeShaders.exists(name) && !initLuaShader(name))
 		{
 			FlxG.log.warn('Shader $name is missing!');
@@ -3674,7 +3675,7 @@ class PlayState extends MusicBeatState
 	{
 		if(!ClientPrefs.data.shaders) return false;
 
-		#if (MODS_ALLOWED && !flash && sys)
+		#if (MODS_ALLOWED && !flash && (sys || html5))
 		if(runtimeShaders.exists(name))
 		{
 			FlxG.log.warn('Shader $name was already initialized!');

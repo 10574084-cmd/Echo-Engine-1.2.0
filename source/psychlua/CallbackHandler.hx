@@ -3,7 +3,7 @@ package psychlua;
 
 class CallbackHandler
 {
-	public static inline function call(l:State, fname:String):Int
+	#if html5 public static function call(l:State, fname:String):Int #else public static inline function call(l:State, fname:String):Int #end
 	{
 		try
 		{

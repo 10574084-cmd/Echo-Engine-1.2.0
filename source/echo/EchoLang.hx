@@ -219,6 +219,8 @@ class EchoLang
 		'Pico Mix is not installed yet: choosing this downloads it (about 160 MB).' => 'Pico Mix todavia no esta instalado: al elegirlo se descarga (unos 160 MB).',
 		'Mobile HUD' => 'HUD para movil',
 		'A phone-friendly layout: your notes where your thumbs reach, no opponent notes,\nshort score, pause button. Based on the "FNF Mobile HUD" mod by SoyKaity778.' => 'Diseno para telefono: tus notas donde llegan los pulgares, sin notas del oponente,\npuntaje corto y boton de pausa. Basado en el mod "FNF Mobile HUD" de SoyKaity778.',
+		'Mod Scripts' => 'Scripts de mods',
+		'Runs the Lua scripts of mods and stages (Pico Mix uses them). Turn it off if a mod misbehaves.\nTakes effect the next time a song starts.' => 'Ejecuta los scripts Lua de mods y escenarios (Pico Mix los usa). Apagalo si un mod falla.\nSe aplica la proxima vez que empiece una cancion.',
 		'Language' => 'Idioma',
 		'Shaders ' => 'Shaders',
 		'Changes the language of the menus. Auto follows your browser.\nReopen the menu to see it changed (songs, mods and the main menu pictures stay in English).' => 'Cambia el idioma de los menus. Auto sigue el de tu navegador.\nVuelve a abrir el menu para verlo cambiado (las canciones, los mods y las imagenes del menu principal siguen en ingles).',
