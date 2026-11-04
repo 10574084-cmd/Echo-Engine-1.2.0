@@ -145,6 +145,16 @@ Todo el juego corre en el navegador de cada persona, así que **nada del código
 * `PlayState`: el evento *Set Property* ahora convierte los valores a número/booleano (en JavaScript un texto en `defaultCamZoom` dejaba la pantalla negra, p. ej. en Blammed).
 * Pequeños ajustes en `Paths`, `Mods`, `CoolUtil`, `WeekData` y `Main` (diferencias entre C++ y JavaScript, lectura de mods, arranque).
 
+## Scripts Lua en la web
+
+Psych Engine usa LuaJIT (`linc_luajit`), que no existe en navegador. En web se cambió por **fengari** (una máquina virtual de Lua 5.3 escrita en JavaScript, incluida en `webshim/html5/fengari.js`, licencia en `fengari.LICENSE.txt`) y una capa `webshim/llua/` que imita la API de `linc_luajit`, así que `FunkinLua` y todas las funciones de Lua de Psych funcionan igual.
+
+* Se ajustaron las diferencias Lua 5.3 vs LuaJIT: números enteros sin `.0`, `unpack`, `loadstring`, `math.pow`, `bit`, `setfenv`…
+* Opción **Mod Scripts** (Gameplay Settings): si un script da problemas, se apaga y la canción se juega sin Lua.
+* Limitaciones: HScript (`runHaxeCode`) aún no está en web, y los shaders dependen de WebGL.
+* Para depurar: abrir `index.html?autosong=<cancion>` carga la canción directo (`<cancion>-(pico-mix)` para Pico Mix); `echoDebug()` en la consola da un resumen de la pantalla.
+* `tools/bundle_fengari.js` regenera `fengari.js` a partir del repo de fengari.
+
 ## Compilar en local
 
 Necesitas [Haxe 4.3.x](https://haxe.org/download/) y las librerías que aparecen en `.github/workflows/pages.yml`.
