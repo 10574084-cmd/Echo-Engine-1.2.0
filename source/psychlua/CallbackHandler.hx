@@ -52,6 +52,7 @@ class CallbackHandler
 		}
 		catch(e:Dynamic)
 		{
+			#if html5 trace('[lua callback] ' + Std.string(js.Syntax.code("({0} && {0}.stack) || {0}", e)).split('\n').slice(0, 6).join(' <- ')); #end
 			if(Lua_helper.sendErrorsToLua) {LuaL.error(l, 'CALLBACK ERROR! ${if(e.message != null) e.message else e}');return 0;}
 			trace(e);
 			throw(e);

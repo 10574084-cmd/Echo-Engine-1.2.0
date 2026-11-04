@@ -24,7 +24,7 @@ class EchoDirectSong
 		out.push('healthBar visible=${g.healthBar.visible} alpha=${g.healthBar.alpha} cams=${g.healthBar.cameras.length}');
 		out.push('uiGroup visible=${g.uiGroup.visible} alpha=${g.uiGroup.alpha} members=${g.uiGroup.length}');
 		out.push('strums=${g.strumLineNotes.length} notes=${g.notes.length} luaScripts=${g.luaArray.length}');
-		out.push('playerStrum0 visible=${g.playerStrums.members[0].visible} alpha=${g.playerStrums.members[0].alpha} x=${g.playerStrums.members[0].x} y=${g.playerStrums.members[0].y}');
+		if (g.playerStrums.members.length > 0) out.push('playerStrum0 visible=${g.playerStrums.members[0].visible} alpha=${g.playerStrums.members[0].alpha} x=${g.playerStrums.members[0].x} y=${g.playerStrums.members[0].y}');
 		for (c in [g.boyfriend, g.dad, g.gf])
 			if (c != null)
 				out.push('anim ${c.curCharacter}: ${c.animation.curAnim == null ? "none" : c.animation.curAnim.name + "#" + c.animation.curAnim.curFrame + (c.animation.curAnim.finished ? " finished" : "") + (c.animation.paused ? " PAUSED" : "")} frames=${c.frames == null ? "null" : Std.string(c.frames.numFrames)} specialAnim=${c.specialAnim} skipDance=${c.skipDance} update=${c.active} timeScale=${flixel.FlxG.animationTimeScale}');

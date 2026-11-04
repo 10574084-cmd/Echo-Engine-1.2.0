@@ -90,6 +90,7 @@ import states.TitleState;
 	public var echoShaderIntensity:Float = 1; // 0..1
 	public var echoShaderBloom:Bool = true;
 	public var echoShaderSongsOnly:Bool = false;
+	public var language:String = 'en-US'; // Psych Engine 1.0 name of the language, some mods (Pico Mix) read it to pick a dialogue file
 	public var echoLang:String = 'Auto'; // menu language: Auto (browser), English, Español
 	public var echoNoteRGB:String = 'Auto'; // note color shader: Auto (the song decides), On, Off
 	public var modScripts:Bool = true; // run the Lua scripts of mods and stages (web: on fengari)

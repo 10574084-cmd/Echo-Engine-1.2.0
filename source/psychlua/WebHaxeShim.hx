@@ -41,6 +41,25 @@ class WebHaxeShim
 						shader.setFloat('angOffset', sprite.frame.angle * FlxAngle.TO_RAD);
 					};
 				}
+			// data/*/dialogueBox.lua: where the "|" pauses are in a dialogue line (every pause also shifts the next ones one letter back)
+			case 'detectPause':
+				var result:Array<Int> = [];
+				var line:String = Std.string(first);
+				var at:Int = line.indexOf('|');
+				while (at != -1)
+				{
+					result.push(at);
+					at = line.indexOf('|', at + 1);
+				}
+				for (i in 0...result.length) result[i] -= i;
+				return result;
+
+			// the same scripts: a tap or click goes to the next line (phones and mouse), BACK does not exist on the web
+			case 'detectTouch':
+				for (touch in FlxG.touches.list) if (touch.justPressed) return true;
+				return FlxG.mouse.justPressed;
+			case 'backButton': return false;
+
 			default:
 		}
 		return null;

@@ -1501,6 +1501,14 @@ class FunkinLua {
 
 		#if DISCORD_ALLOWED DiscordClient.addLuaCallbacks(lua); #end
 		#if HSCRIPT_ALLOWED HScript.implement(this); #end
+		// Psych Engine 1.0 function used by mods: this engine has no translations of mod text, so the default text is used
+		addLocalCallback('getTranslationPhrase', function(key:String, ?defaultPhrase:String, ?values:Array<Dynamic> = null):String {
+			var text:String = defaultPhrase != null ? defaultPhrase : key;
+			if (values != null) for (i in 0...values.length) text = StringTools.replace(text, '{' + i + '}', Std.string(values[i]));
+			return text;
+		});
+		addLocalCallback('getTranslationFont', function():String return 'vcr.ttf');
+
 		#if (html5 && !HSCRIPT_ALLOWED)
 		// No HScript on the web (yet): runHaxeCode / addHaxeLibrary are ignored and runHaxeFunction runs the few known jobs natively (see WebHaxeShim),
 		// so Lua scripts that call them keep running (a missing function would stop the whole script, e.g. a stage before it builds its background)
@@ -1635,7 +1643,7 @@ class FunkinLua {
 	}
 
 	public static function luaTrace(text:String, ignoreCheck:Bool = false, deprecated:Bool = false, color:FlxColor = FlxColor.WHITE) {
-		#if html5 if(ignoreCheck) trace('[lua] ' + text); #end // the browser console is the only place a player can look at
+		#if html5 if(!deprecated) trace('[lua] ' + text); #end // the browser console is the only place a player can look at
 		if(ignoreCheck || getBool('luaDebugMode')) {
 			if(deprecated && !getBool('luaDeprecatedWarnings')) {
 				return;
