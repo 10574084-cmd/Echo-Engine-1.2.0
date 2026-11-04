@@ -3186,6 +3186,7 @@ class PlayState extends MusicBeatState
 		echoRecordSong(false);
 		#if html5
 		webfs.TouchBridge.setPlaying(false);
+		webfs.TouchBridge.setHud(null);
 		online.Session.onForcedEvent = null;
 		// left the song before the end: tell the rival
 		if(online.Session.active && !onlineFinished)

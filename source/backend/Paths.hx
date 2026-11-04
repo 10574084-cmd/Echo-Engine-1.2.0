@@ -410,6 +410,32 @@ class Paths
 		return getPackerAtlas(key, library);
 	}
 
+	/** Several atlases in one sprite: "characters/a, characters/b" (a Psych Engine 1.0 feature that Pico Mix uses). Atlases that do not exist are skipped. */
+	static public function getMultiAtlas(keys:Array<String>, ?library:String = null, ?allowGPU:Bool = true):FlxAtlasFrames
+	{
+		var result:FlxAtlasFrames = null;
+		for (raw in keys)
+		{
+			var key:String = StringTools.trim(raw);
+			if (key == '') continue;
+
+			var frames:FlxAtlasFrames = null;
+			try frames = getAtlas(key, library, allowGPU) catch (e:Dynamic) trace('Atlas "$key" could not be loaded: $e');
+			if (frames == null) { trace('Atlas "$key" is missing, skipping it'); continue; }
+
+			if (result == null) result = frames;
+			else
+			{
+				if (result.parent == frames.parent) continue;
+				var merged:FlxAtlasFrames = new FlxAtlasFrames(result.parent);
+				merged.addAtlas(result, true);
+				merged.addAtlas(frames, true);
+				result = merged;
+			}
+		}
+		return result;
+	}
+
 	inline static public function getSparrowAtlas(key:String, ?library:String = null, ?allowGPU:Bool = true):FlxAtlasFrames
 	{
 		var imageLoaded:FlxGraphic = image(key, library, allowGPU);

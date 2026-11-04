@@ -38,6 +38,7 @@
 	var buttons = [];     // { id, set: 'menu' | 'play', el }
 	var rotate = null;
 	var editing = false, editSet = 'menu', editBar = null, work = null;
+	var hud = null;       // Mobile HUD: zones (in game pixels, 1280x720) for the note buttons n0..n3 and pause, set by the game
 	var fsArmed = false;
 
 	function store(value) {
@@ -134,6 +135,8 @@
 			'#echo-pad .b.on{background:rgba(255,255,255,1);color:#000}' +
 			'#echo-pad.is-menu .menu{display:flex}' +
 			'#echo-pad.is-play .play{display:flex}' +
+			'#echo-pad.hud .b.play{background:transparent;border-color:transparent;color:transparent;border-radius:0}' +
+			'#echo-pad.hud .b.play.on{background:rgba(255,255,255,.18)}' +
 			'#echo-pad.editing .b{outline:2px dashed #ffd24a;cursor:grab}' +
 			'#echo-pad.editing{opacity:1!important}' +
 			'#echo-edit{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:100002;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;' +
@@ -216,6 +219,13 @@
 		var p = Math.min(0.12 * vmin, 80) * cfg.size;
 		r.pause = { x: W - 0.02 * vmin - p, y: 0.02 * vmin, w: p, h: p };
 
+		// Mobile HUD: the buttons sit on the game's own lanes (see hudRects)
+		if (hud && !editing) {
+			var hr = hudRects(W, H);
+			for (var hid in hr) r[hid] = hr[hid];
+			return r;
+		}
+
 		// custom positions (the size and spacing settings still apply)
 		var pos = editing ? work : (cfg.layout === 'Custom' ? cfg.custom : null);
 		if (pos) {
@@ -228,6 +238,23 @@
 			}
 		}
 		return r;
+	}
+
+	/** Game pixels (1280x720, centred and scaled to fit the window) -> window pixels. */
+	function hudRects(W, H) {
+		var k = Math.min(W / 1280, H / 720);
+		var ox = (W - 1280 * k) / 2, oy = (H - 720 * k) / 2;
+		var out = {};
+		for (var id in hud) {
+			var z = hud[id];
+			out[id] = { x: ox + z.x * k, y: oy + z.y * k, w: z.w * k, h: z.h * k };
+		}
+		return out;
+	}
+
+	function setHud(zones) {
+		hud = zones && typeof zones === 'object' ? zones : null;
+		if (root) { root.classList.toggle('hud', !!hud); refresh(); }
 	}
 
 	function applyLayout() {
@@ -250,7 +277,7 @@
 		ensureRoot();
 		var show = (cfg.enabled || editing) && !overlayOpen;
 		root.style.display = show ? 'block' : 'none';
-		root.className = (editing ? 'editing ' : '') + 'is-' + (editing ? editSet : (playing ? 'play' : 'menu'));
+		root.className = (editing ? 'editing ' : '') + (hud && !editing ? 'hud ' : '') + 'is-' + (editing ? editSet : (playing ? 'play' : 'menu'));
 		applyLayout();
 		applyGuard();
 		checkRotate();
@@ -485,7 +512,7 @@
 		refresh();
 	}
 
-	window.EchoTouch = { setPlaying: setPlaying, get: get, set: set, edit: startEdit, reset: reset };
+	window.EchoTouch = { setPlaying: setPlaying, get: get, set: set, edit: startEdit, reset: reset, setHud: setHud };
 
 	// ---------------------------------------------------------------------------------------------
 

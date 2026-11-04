@@ -26,6 +26,11 @@ class EchoDirectSong
 		out.push('strums=${g.strumLineNotes.length} notes=${g.notes.length} luaScripts=${g.luaArray.length}');
 		out.push('playerStrum0 visible=${g.playerStrums.members[0].visible} alpha=${g.playerStrums.members[0].alpha} x=${g.playerStrums.members[0].x} y=${g.playerStrums.members[0].y}');
 		out.push('members=${g.members.length}');
+		for (k in g.modchartSprites.keys())
+		{
+			var sp = g.modchartSprites.get(k);
+			out.push('lua sprite $k visible=${sp.visible} alpha=${sp.alpha} pos=${sp.x},${sp.y} size=${sp.width}x${sp.height} frame=${sp.frameWidth}x${sp.frameHeight} shader=${sp.shader != null} gfx=${sp.graphic == null ? "null" : (sp.graphic.bitmap == null ? "nobitmap" : sp.graphic.bitmap.width + "x" + sp.graphic.bitmap.height)} cams=${sp.cameras.length} onScreen=${sp.isOnScreen(g.camGame)}');
+		}
 		return out.join('\n');
 	}
 
@@ -54,6 +59,11 @@ class EchoDirectSong
 		if (flixel.FlxG.sound.music == null) flixel.FlxG.sound.playMusic(backend.Paths.music('freakyMenu'), 0); // the menus always have it; songs expect it
 		backend.Difficulty.resetList();
 		backend.WeekData.reloadWeekFiles(false);
+		// extra switches for tests: &bot=1 (botplay), &mobilehud=1, &scripts=0
+		var query:String = Browser.location.search;
+		if (query.indexOf('bot=1') >= 0) ClientPrefs.data.gameplaySettings.set('botplay', true);
+		if (query.indexOf('mobilehud=1') >= 0) ClientPrefs.data.mobileHud = true;
+		if (query.indexOf('scripts=0') >= 0) ClientPrefs.data.modScripts = false;
 		try
 		{
 			states.PlayState.SONG = backend.Song.loadFromJson(song, song);

@@ -258,6 +258,6 @@ class EchoLang
 		'Top songs:' => 'Mejores canciones:',
 		'Press RESET again to erase the stats (any other key cancels)' => 'Pulsa RESET otra vez para borrar las estadisticas (cualquier otra tecla cancela)',
 		'BACK: close   -   RESET: erase the stats' => 'ATRAS: cerrar   -   RESET: borrar las estadisticas',
-		'This mod uses scripts or shaders, which the web version cannot run.\nExpect black backgrounds, missing characters or odd colors.' => 'Este mod usa scripts o shaders, que la version web no puede ejecutar.\nPuede haber fondos negros, personajes que faltan o colores raros.'
+		'This mod uses HScript or you turned Mod Scripts off, so some effects, stages or characters may be missing.' => 'Este mod usa HScript o apagaste Mod Scripts, asi que pueden faltar efectos, escenarios o personajes.'
 	];
 }

@@ -1501,6 +1501,13 @@ class FunkinLua {
 
 		#if DISCORD_ALLOWED DiscordClient.addLuaCallbacks(lua); #end
 		#if HSCRIPT_ALLOWED HScript.implement(this); #end
+		#if (html5 && !HSCRIPT_ALLOWED)
+		// No HScript on the web (yet): runHaxeCode / addHaxeLibrary are ignored and runHaxeFunction runs the few known jobs natively (see WebHaxeShim),
+		// so Lua scripts that call them keep running (a missing function would stop the whole script, e.g. a stage before it builds its background)
+		addLocalCallback('runHaxeCode', function(?a:Dynamic, ?b:Dynamic, ?c:Dynamic, ?d:Dynamic):Dynamic return null);
+		addLocalCallback('addHaxeLibrary', function(?a:Dynamic, ?b:Dynamic):Dynamic return null);
+		addLocalCallback('runHaxeFunction', function(name:String, ?args:Array<Dynamic>):Dynamic return WebHaxeShim.call(name, args));
+		#end
 		#if ACHIEVEMENTS_ALLOWED Achievements.addLuaCallbacks(lua); #end
 		#if flxanimate FlxAnimateFunctions.implement(this); #end
 		ReflectionFunctions.implement(this);
@@ -1628,6 +1635,7 @@ class FunkinLua {
 	}
 
 	public static function luaTrace(text:String, ignoreCheck:Bool = false, deprecated:Bool = false, color:FlxColor = FlxColor.WHITE) {
+		#if html5 if(ignoreCheck) trace('[lua] ' + text); #end // the browser console is the only place a player can look at
 		if(ignoreCheck || getBool('luaDebugMode')) {
 			if(deprecated && !getBool('luaDeprecatedWarnings')) {
 				return;

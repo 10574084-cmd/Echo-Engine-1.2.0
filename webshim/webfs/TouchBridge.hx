@@ -20,6 +20,10 @@ class TouchBridge
 		js.Syntax.code("if (window.EchoTouch) window.EchoTouch.setPlaying({0})", playing);
 	}
 
+	/** Mobile HUD: the note buttons (n0..n3) and pause go where the game draws them. zonesJson is {"n0":{x,y,w,h},...} in game pixels; null goes back to the normal layout. */
+	public static function setHud(zonesJson:Null<String>):Void
+		js.Syntax.code("if (window.EchoTouch) window.EchoTouch.setHud({0} == null ? null : JSON.parse({0}))", zonesJson);
+
 	public static function getBool(name:String):Bool
 		return js.Syntax.code("(window.EchoTouch ? window.EchoTouch.get({0}) : null) === true", name);
 

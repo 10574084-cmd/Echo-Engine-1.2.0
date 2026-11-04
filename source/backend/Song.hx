@@ -58,6 +58,20 @@ class Song
 			songJson.player3 = null;
 		}
 
+		// Psych Engine 1.0 charts ("psych_v1..."): lanes 0-3 are ALWAYS the player's and "mustHitSection" is only for the camera.
+		// This engine (0.7) decides the side with "mustHitSection XOR lane > 3", so on the sections where mustHitSection is false the lanes are swapped.
+		// (Without this, Pico Mix made you play the enemy's notes while the enemy's voice track was the one that got muted on a miss.)
+		if(songJson.format != null && StringTools.startsWith(Std.string(songJson.format), 'psych_v1') && songJson.notes != null)
+		{
+			for (secNum in 0...songJson.notes.length)
+			{
+				var sec:SwagSection = songJson.notes[secNum];
+				if(sec.mustHitSection || sec.sectionNotes == null) continue;
+				for (note in sec.sectionNotes)
+					if(note[1] >= 0) note[1] = (Std.int(note[1]) + 4) % 8;
+			}
+		}
+
 		if(songJson.events == null)
 		{
 			songJson.events = [];

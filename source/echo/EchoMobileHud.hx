@@ -84,14 +84,41 @@ class EchoMobileHud
 	{
 		for (strum in game.opponentStrums) strum.visible = false;
 
-		if (ClientPrefs.data.middleScroll) return;
-		var down:Bool = ClientPrefs.data.downScroll;
-		for (i in 0...game.playerStrums.length)
+		if (!ClientPrefs.data.middleScroll)
 		{
-			var strum = game.playerStrums.members[i];
-			strum.x = (down ? PAIRS_X : CENTER_X)[i];
-			strum.y = down ? 540 : 50;
+			var down:Bool = ClientPrefs.data.downScroll;
+			for (i in 0...game.playerStrums.length)
+			{
+				var strum = game.playerStrums.members[i];
+				strum.x = (down ? PAIRS_X : CENTER_X)[i];
+				strum.y = down ? 540 : 50;
+			}
 		}
+		touchZones();
+	}
+
+	/** Phones: the page's invisible note buttons are laid over the lanes (a tap on a lane plays that note) and over the pause button. */
+	function touchZones():Void
+	{
+		#if html5
+		var strums = game.playerStrums.members;
+		if (strums.length < 4) return;
+		var w:Float = strums[0].width;
+		var zones:Dynamic = {};
+		for (i in 0...4)
+		{
+			var x:Float = strums[i].x;
+			// each lane reaches halfway to its neighbours (or a bit outside at the ends)
+			var left:Float = i == 0 ? x - 40 : (strums[i - 1].x + w + x) / 2;
+			var right:Float = i == 3 ? x + w + 40 : (x + w + strums[i + 1].x) / 2;
+			if (left > x) left = x;
+			if (right < x + w) right = x + w;
+			Reflect.setField(zones, 'n' + i, {x: left, y: 0, w: right - left, h: FlxG.height});
+		}
+		if (pauseButton != null)
+			Reflect.setField(zones, 'pause', {x: pauseButton.x - 10, y: pauseButton.y - 10, w: pauseButton.width + 20, h: pauseButton.height + 20});
+		webfs.TouchBridge.setHud(haxe.Json.stringify(zones));
+		#end
 	}
 
 	public function spawn(note:Note):Void
