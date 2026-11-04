@@ -1,12 +1,16 @@
 (function(){
 "use strict";
+var __td = new TextDecoder(); var __out = function(x){ return {write: function(b){ console.log(typeof b === "string" ? b : __td.decode(b)); }, fd: 1}; };
+var process = {env: {}, platform: "browser", argv: [], versions: {node: "0"}, cwd: function(){ return "/"; }, uptime: function(){ return performance.now() / 1000; }, stdin: {fd: 0}, stdout: __out(), stderr: __out(), exit: function(){}}; // fengari reads the process object of node; webpack would provide a shim
+var Buffer = {from: function(x){ return x; }};
+var global = window;
 var __defs = {};
 var __cache = {};
 var __stubs = {"stub:fs":{},"stub:path":{},"stub:os":{platform:function(){return "browser"}},"stub:readline-sync":{setDefaultOptions:function(){},prompt:function(){return ""}},"stub:tmp":{},"stub:child_process":{}};
 function __req(id){ if (id in __stubs) return __stubs[id]; if (__cache[id]) return __cache[id].exports; var m = __cache[id] = {exports:{}}; __defs[id](m, m.exports, function(r){ return __req(__maps[id][r]); }); return m.exports; }
 var __maps = {};
-__maps["fengari/src/fengari.js"] = {"./fengaricore.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/fengaricore.js","./luaconf.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/luaconf.js","./lua.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/lua.js","./lauxlib.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/lauxlib.js","./lualib.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/lualib.js"};
-__defs["fengari/src/fengari.js"] = function(module, exports, require){
+__maps["/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/fengari.js"] = {"./fengaricore.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/fengaricore.js","./luaconf.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/luaconf.js","./lua.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/lua.js","./lauxlib.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/lauxlib.js","./lualib.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/lualib.js"};
+__defs["/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/fengari.js"] = function(module, exports, require){
 /**
 @license MIT
 
@@ -17655,47 +17659,6 @@ const luaopen_package = function(L) {
 module.exports.luaopen_package = luaopen_package;
 
 };
-__maps["/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/fengari.js"] = {"./fengaricore.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/fengaricore.js","./luaconf.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/luaconf.js","./lua.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/lua.js","./lauxlib.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/lauxlib.js","./lualib.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/lualib.js"};
-__defs["/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/fengari.js"] = function(module, exports, require){
-/**
-@license MIT
-
-Copyright © 2017-2019 Benoit Giannangeli
-Copyright © 2017-2019 Daurnimator
-Copyright © 1994–2017 Lua.org, PUC-Rio.
-*/
-
-"use strict";
-
-const core = require("./fengaricore.js");
-
-module.exports.FENGARI_AUTHORS         = core.FENGARI_AUTHORS;
-module.exports.FENGARI_COPYRIGHT       = core.FENGARI_COPYRIGHT;
-module.exports.FENGARI_RELEASE         = core.FENGARI_RELEASE;
-module.exports.FENGARI_VERSION         = core.FENGARI_VERSION;
-module.exports.FENGARI_VERSION_MAJOR   = core.FENGARI_VERSION_MAJOR;
-module.exports.FENGARI_VERSION_MINOR   = core.FENGARI_VERSION_MINOR;
-module.exports.FENGARI_VERSION_NUM     = core.FENGARI_VERSION_NUM;
-module.exports.FENGARI_VERSION_RELEASE = core.FENGARI_VERSION_RELEASE;
-
-module.exports.luastring_eq      = core.luastring_eq;
-module.exports.luastring_indexOf = core.luastring_indexOf;
-module.exports.luastring_of      = core.luastring_of;
-module.exports.to_jsstring       = core.to_jsstring;
-module.exports.to_luastring      = core.to_luastring;
-module.exports.to_uristring      = core.to_uristring;
-
-const luaconf = require('./luaconf.js');
-const lua     = require('./lua.js');
-const lauxlib = require('./lauxlib.js');
-const lualib  = require('./lualib.js');
-
-module.exports.luaconf = luaconf;
-module.exports.lua     = lua;
-module.exports.lauxlib = lauxlib;
-module.exports.lualib  = lualib;
-
-};
 __maps["/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/fengarilib.js"] = {"./lua.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/lua.js","./lauxlib.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/lauxlib.js","./fengaricore.js":"/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/fengaricore.js"};
 __defs["/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/fengarilib.js"] = function(module, exports, require){
 const {
@@ -17790,5 +17753,5 @@ const { luaopen_fengari } = require('./fengarilib.js');
 loadedlibs[lualib.LUA_FENGARILIBNAME] = luaopen_fengari;
 
 };
-window.fengari = __req("fengari/src/fengari.js");
+window.fengari = __req("/tmp/claude-0/-home-claude/bbc4cf9a-5f3f-5b95-8348-6f6dbb0a60bf/scratchpad/fen/fengari/src/fengari.js");
 })();

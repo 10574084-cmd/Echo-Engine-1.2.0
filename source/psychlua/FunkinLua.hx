@@ -92,7 +92,7 @@ class FunkinLua {
 		set('scrollSpeed', PlayState.SONG.speed);
 		set('crochet', Conductor.crochet);
 		set('stepCrochet', Conductor.stepCrochet);
-		set('songLength', FlxG.sound.music.length);
+		set('songLength', FlxG.sound.music != null ? FlxG.sound.music.length : 0);
 		set('songName', PlayState.SONG.song);
 		set('songPath', Paths.formatToSongPath(PlayState.SONG.song));
 		set('startedCountdown', false);
@@ -1581,6 +1581,7 @@ class FunkinLua {
 		}
 		catch (e:Dynamic) {
 			trace(e);
+			#if html5 trace('while calling $func: ' + haxe.CallStack.toString(haxe.CallStack.exceptionStack())); #end
 		}
 		return LuaUtils.Function_Continue;
 	}

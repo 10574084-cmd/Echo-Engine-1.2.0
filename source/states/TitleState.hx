@@ -116,6 +116,10 @@ class TitleState extends MusicBeatState
 
 		Highscore.load();
 
+		#if html5
+		echo.EchoDirectSong.check(); // "?autosong=<song folder name>" opens a song straight away (used to test mods quickly)
+		#end
+
 		// IGNORE THIS!!!
 		titleJSON = tjson.TJSON.parse(Paths.getTextFromFile('images/gfDanceTitle.json'));
 

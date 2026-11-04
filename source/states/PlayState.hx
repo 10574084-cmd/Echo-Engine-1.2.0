@@ -692,6 +692,7 @@ class PlayState extends MusicBeatState
 		Paths.clearUnusedMemory();
 
 		if(eventNotes.length < 1) checkEventNote();
+		trace('PlayState created');
 	}
 
 	function set_songSpeed(value:Float):Float
@@ -994,6 +995,7 @@ class PlayState extends MusicBeatState
 
 	public function startCountdown()
 	{
+		trace('startCountdown (started: $startedCountdown)');
 		if(startedCountdown) {
 			callOnScripts('onStartCountdown');
 			return false;

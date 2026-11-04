@@ -64,6 +64,7 @@ class Lua
 
 	public static function tostring(l:State, idx:Int):String
 	{
+		if (idx == 0) return ""; // LuaJIT tolerates index 0 (FunkinLua passes a status code by mistake), fengari does not
 		var s:Dynamic = Fengari.lua.lua_tojsstring(l, idx);
 		return s == null ? "" : s;
 	}

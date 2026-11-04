@@ -29,7 +29,7 @@ function add(file) {
 }
 const entry = path.join(repo, 'src/fengari.js');
 add(entry);
-let js = '(function(){\n"use strict";\nvar __defs = {};\nvar __cache = {};\nvar __stubs = {' +
+let js = '(function(){\n"use strict";\nvar __td = new TextDecoder(); var __out = function(x){ return {write: function(b){ console.log(typeof b === "string" ? b : __td.decode(b)); }, fd: 1}; };\nvar process = {env: {}, platform: "browser", argv: [], versions: {node: "0"}, cwd: function(){ return "/"; }, uptime: function(){ return performance.now() / 1000; }, stdin: {fd: 0}, stdout: __out(), stderr: __out(), exit: function(){}}; // fengari reads the process object of node; webpack would provide a shim\nvar Buffer = {from: function(x){ return x; }};\nvar global = window;\nvar __defs = {};\nvar __cache = {};\nvar __stubs = {' +
 	Object.keys(stubs).map(k => JSON.stringify('stub:' + k) + ':' + stubs[k]).join(',') + '};\n' +
 	'function __req(id){ if (id in __stubs) return __stubs[id]; if (__cache[id]) return __cache[id].exports; var m = __cache[id] = {exports:{}}; __defs[id](m, m.exports, function(r){ return __req(__maps[id][r]); }); return m.exports; }\nvar __maps = {};\n';
 for (const [file, mod] of Object.entries(modules)) {
