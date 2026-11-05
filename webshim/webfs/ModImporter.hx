@@ -17,6 +17,8 @@ typedef ImportResult =
 	var mods:Array<String>;
 	var files:Int;
 	var ?error:String;
+	/** Echo mods: problems found while reading them (also written to the console). */
+	var ?notes:Array<String>;
 }
 
 /**
@@ -158,16 +160,27 @@ class ModImporter
 	{
 		if (result.error != null)
 			toast('Could not import "$zipName": ${result.error}', true);
-		else if (result.mods.length == 1)
-			toast('Imported "${result.mods[0]}" (${result.files} files).');
 		else
-			toast('Imported ${result.mods.length} mods (${result.files} files).');
+			toast('Preparing the pictures of "$zipName"... (do not start a song yet)', false, true);
 
-		// the new mod's fonts have to be registered before anything shows text with them
-		FontLoader.registerAll(function()
+		// Echo mods may bring .webp pictures: the browser turns them into PNG (it can take a while), then the fonts, then the menus refresh
+		echo.mods.EchoImages.convertMods(result.mods, function(converted:Int, failed:Int)
 		{
-			for (callback in onImported.copy()) callback(result);
-			next();
+			if (result.error == null)
+			{
+				if (result.mods.length == 1)
+					toast('Imported "${result.mods[0]}" (${result.files} files). Ready to play.');
+				else
+					toast('Imported ${result.mods.length} mods (${result.files} files). Ready to play.');
+				if (result.notes != null && result.notes.length > 0)
+					toast('${result.notes.length} warning(s) in the mod, see the console (F12).', true);
+			}
+			if (failed > 0) toast('$failed picture(s) of the mod could not be read (see the console).', true);
+			FontLoader.registerAll(function()
+			{
+				for (callback in onImported.copy()) callback(result);
+				next();
+			});
 		});
 	}
 
@@ -226,6 +239,22 @@ class ModImporter
 		if (failed != null)
 			return {mods: [], files: 0, error: failed};
 
+		// 3b. mods in the Echo structure (mod.js / mod.json): translate them into files the engine reads
+		var notes:Array<String> = [];
+		for (mod in layout.mods)
+		{
+			var prefix = 'mods/$mod/';
+			var own:Map<String, Bytes> = new Map();
+			for (path => data in toSave)
+				if (StringTools.startsWith(path, prefix)) own.set(path.substr(prefix.length), data);
+			if (!echo.mods.EchoModLoader.isEchoMod(own)) continue;
+
+			var report = echo.mods.EchoModLoader.process(own);
+			for (path => data in own) toSave.set(prefix + path, data);
+			for (w in report.warnings) { notes.push('$mod: $w'); trace('[Echo mod] $mod: $w'); }
+			trace('[Echo mod] $mod: ' + report.converted.length + ' things read');
+		}
+
 		// 4. replace older copies of the same mod, then store everything in one go
 		for (mod in layout.mods)
 			VirtualFS.deleteDirectoryRecursive('mods/$mod');
@@ -235,7 +264,7 @@ class ModImporter
 
 		var count = 0;
 		for (_ in toSave) count++;
-		return {mods: layout.mods, files: count};
+		return {mods: layout.mods, files: count, notes: notes};
 	}
 
 	/** haxe.zip.Reader.unzip needs haxe.zip.Uncompress, which does not exist on JS: inflate with the pure Haxe implementation. */

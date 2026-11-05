@@ -29,6 +29,12 @@ class EchoDirectSong
 			if (c != null)
 				out.push('anim ${c.curCharacter}: ${c.animation.curAnim == null ? "none" : c.animation.curAnim.name + "#" + c.animation.curAnim.curFrame + (c.animation.curAnim.finished ? " finished" : "") + (c.animation.paused ? " PAUSED" : "")} frames=${c.frames == null ? "null" : Std.string(c.frames.numFrames)} specialAnim=${c.specialAnim} skipDance=${c.skipDance} update=${c.active} timeScale=${flixel.FlxG.animationTimeScale}');
 		out.push('members=${g.members.length}');
+		for (m in g.members)
+		{
+			var sp:flixel.FlxSprite = Std.isOfType(m, flixel.FlxSprite) ? cast m : null;
+			if (sp != null && Std.isOfType(sp, objects.BGSprite))
+				out.push('stage ${sp.graphic == null ? "NO-GRAPHIC" : sp.graphic.key} pos=${sp.x},${sp.y} size=${sp.frameWidth}x${sp.frameHeight} scroll=${sp.scrollFactor.x} visible=${sp.visible}');
+		}
 		for (k in g.modchartSprites.keys())
 		{
 			var sp = g.modchartSprites.get(k);
@@ -48,7 +54,9 @@ class EchoDirectSong
 		if (song == '') return;
 
 		var mod:String = StringTools.endsWith(song, '(pico-mix)') ? EchoBuiltin.PICO : null;
-		if (mod != null && !EchoBuiltin.installed(mod))
+		var modAt = query.indexOf('mod='); // &mod=<folder>: a mod that was imported by hand
+		if (modAt >= 0) mod = StringTools.urlDecode(query.substr(modAt + 4).split('&')[0]);
+		if (mod == EchoBuiltin.PICO && !EchoBuiltin.installed(mod))
 			EchoBuiltin.install(mod, function(ok:Bool, message:String) if (ok) start(song, mod) else trace('autosong: $message'));
 		else
 			start(song, mod);

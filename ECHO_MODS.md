@@ -1,140 +1,64 @@
-# Echo Mods – formato de mods propio de Echo Engine (propuesta v0.1)
+# Echo Mods – formato de mods propio de Echo Engine (v0.2, Fase 1 lista)
 
-Objetivo: que hacer un mod (o portar uno de Psych Engine) sea fácil, que corra igual en web, PC y celular, y que los eventos más usados vengan **ya hechos dentro del motor** (sin depender de Lua/HScript, que en la web son una emulación).
+Objetivo: que hacer un mod (o portar uno de Psych Engine) sea fácil, que corra igual en web, PC y celular, y que los eventos más usados vengan **ya hechos dentro del motor**, sin depender de Lua/HScript (que en la web son una emulación).
 
-Esta propuesta parte de la estructura que armaste (`PicoMixNose/…`, `browser-engine/…`) y la adapta al motor que ya existe (Haxe/OpenFL), para no perder lo que funciona.
-
-## 1. Idea general
+## 1. Cómo funciona
 
 ```
-Mod (carpeta o .zip)  ──►  EchoModLoader  ──►  el juego (PlayState, menús, audio)
-                              ▲
-        convertidor  psych2echo  (mods Psych → formato Echo)
+Mod Echo (carpeta o .zip)  ──►  EchoModLoader  ──►  archivos en forma Psych  ──►  el juego de siempre
+                                    (al importar)
 ```
 
-* Un mod Echo es una carpeta con datos **JSON** y archivos de imagen/audio. No hace falta programar para un mod normal.
-* El `EchoModLoader` (Haxe, dentro del motor) lee el mod, lo valida y lo entrega al juego. Reutiliza el motor actual (notas, audio, cámara), así que cada mod nuevo ya hereda lo que funciona hoy.
-* Los **eventos** son una biblioteca nativa (`echo/events/`). Un chart los pide por nombre y con argumentos en JSON.
-* Cuando un mod necesite algo muy propio, puede traer un `events/custom-events.js` pequeño (ver §5). Es opcional.
+* El motor sigue siendo Haxe. Al **importar** un zip, si trae un `mod.js`/`mod.json` en la raíz, el `EchoModLoader` lo lee, lo valida y lo traduce a los archivos que el juego ya entiende (personajes, charts, canciones, escenarios, semanas). Por eso todo lo que ya funciona (notas, audio, cámara, iconos, Freeplay) lo heredan los mods nuevos sin tocar nada.
+* Los datos son archivos **`.js` que solo contienen un objeto** (como en tu estructura) o `.json`. Se **leen, nunca se ejecutan**: se permiten comentarios, claves sin comillas, comillas simples y comas finales, pero no código (ni llamadas ni variables). Un mod no puede ejecutar nada solo por importarse.
+* Se aceptan envoltorios comunes: `export default {…}`, `module.exports = {…}`, `Echo.define({…})`, `const x = {…}`.
+* Los mods Psych normales siguen funcionando igual que antes.
 
-## 2. Estructura de un mod
-
-Se mantiene tu árbol; la diferencia es que los datos son `.json` (se validan solos, se pueden editar con cualquier editor y no ejecutan código) y los `.js` quedan solo para eventos propios.
+## 2. Estructura de un mod (la tuya, sin cambios)
 
 ```
-PicoMixNose/
-├── mod.json                  ← nombre, autor, versión, versión mínima de Echo, créditos
-├── menu/
-│   ├── menu.json             ← pestañas, orden de semanas, textos
-│   ├── backgrounds/  character-icons/  menu-images/  freeplay-icons/
-├── characters/
-│   ├── pico.json             ← animaciones, offsets, escala, icono, color de la barra
-│   ├── pico.webp  (+ pico.xml o pico.atlas.json)
-├── charts/
-│   └── bopeebo/  easy.json  normal.json  hard.json
-├── songs/
-│   └── bopeebo/  song.json  Inst.ogg/.m4a/.mp3  Voices-Player.*  Voices-Opponent.*
-├── stages/
-│   ├── stage.json            ← capas (imagen, posición, scroll, animación), posiciones de personajes, zoom
-│   └── images/
-├── images/  (notas, efectos, iconos de vida, pausa, game over)
-├── animations/               ← spritesheets compartidos
-├── events/
-│   ├── events.json           ← qué eventos usa el mod y sus valores por defecto
-│   └── custom-events.js      ← (opcional) eventos propios
-├── dialogues/                ← senpai.json, roses.json, dialogue-settings.json
-├── weeks/                    ← weeks.json
-├── data/                     ← achievements.json, settings.json, metadata.json
-└── fonts/
+PicoMix/
+├── mod.js                    ← nombre, autor, versión
+├── characters/               ← <id>.js + <imagen>.webp|png + .xml
+├── charts/<cancion>/         ← easy.js  normal.js  hard.js
+├── songs/<cancion>/          ← song.js, Inst.ogg|m4a|mp3, Voices-*.ogg|m4a|mp3
+├── stages/                   ← <id>.js (capas) + images/
+├── images/  animations/  events/  dialogues/  weeks/  data/  fonts/  menu/
 ```
 
-Reglas:
-* Nombres en minúsculas y con guiones (`philly-nice`), sin parentéis ni espacios. El convertidor se encarga de renombrar.
-* Imágenes `.webp` o `.png`; audio `.ogg` o `.m4a` (el `.mp3` solo como respaldo).
-* Una sola carpeta `songs/<cancion>/` por canción; el chart de cada dificultad vive en `charts/<cancion>/<dificultad>.json`.
+Reglas: nombres de carpeta sin espacios ni paréntesis; imágenes `.webp` o `.png`; en la web las `.webp` se convierten a `.png` justo después de importar (el aviso "Preparando imágenes…" indica que hay que esperar a "Ready to play").
 
-## 3. Formatos de datos
+## 3. Formatos
 
-### mod.json
-```json
-{ "id": "pico-mix", "name": "Pico Mix", "version": "1.0.0", "echo": ">=1.3.0",
-  "authors": ["…"], "description": "…", "runsGlobally": false }
-```
+### charts/<cancion>/<dificultad>.js
+Tiempos en ms, carriles `0–3` = jugador y `4–7` = oponente; la cámara sale del evento `camera.target` (el cargador lo convierte a `mustHitSection`). Mismo espíritu que `psych_v1` de Psych 1.0.
 
-### charts/<cancion>/<dificultad>.json
-Tiempos en **milisegundos**, carriles `0–3` = jugador y `4–7` = oponente (fijo, sin `mustHitSection`; la cámara se controla con eventos).
-```json
-{ "bpm": 100, "speed": 1.8, "stage": "stage-erect",
-  "player": "pico", "opponent": "dad", "girlfriend": "nene",
-  "notes":  [ { "t": 600, "lane": 1, "len": 0, "type": "" } ],
-  "events": [ { "t": 0, "name": "camera.target", "args": { "who": "dad" } } ] }
-```
-(Es la misma idea que el formato `psych_v1` de Psych 1.0, que hoy ya se entiende y se invierte a mano para Pico Mix.)
+### characters/<id>.js
+`image` (puede ser una lista de atlas), `scale`, `flipX`, `antialiasing`, `icon`, `barColor`, `camera`, `position`, `anims: [{ name, prefix, fps, loop, offset }]`. El icono se busca en `images/health-icons`.
 
-### characters/<id>.json
-```json
-{ "image": "pico", "scale": 1, "flipX": false, "antialiasing": true,
-  "icon": "pico", "barColor": "#B7D855", "camera": [0, 0], "position": [0, 0],
-  "anims": [ { "name": "idle", "prefix": "Idle", "fps": 24, "loop": false, "offset": [0, 0] } ] }
-```
-`image` puede ser una lista (varios atlas por personaje, como pide Pico Mix; ya está soportado).
+### stages/<id>.js
+`zoom`, posiciones `bf` / `dad` / `gf`, y `layers: [{ image, x, y, scale, scroll, front, anim, alpha, flipX }]`. Las dibuja `EchoStage` (nativo, sin Lua).
 
-### stages/<id>.json
-```json
-{ "zoom": 0.9, "layers": [ { "image": "bg", "x": -985, "y": -805, "scale": 1.15, "scroll": [1, 1] } ],
-  "bf": [800, 420], "dad": [100, 420], "gf": [500, 300] }
-```
+### weeks/weeks.js, songs.js
+Lista de semanas y canciones (se convierten a las semanas que muestra Freeplay).
 
-## 4. Eventos portados (biblioteca nativa)
+## 4. Eventos (Fase 2)
 
-Los eventos de Psych / Pico Mix más usados pasan a ser eventos nativos de Echo. El convertidor traduce los nombres.
+Biblioteca nativa `echo.events` con nombres como `camera.target`, `camera.zoom`, `camera.bop`, `camera.shake`, `screen.flash`, `char.anim`, `char.change`, `gameplay.speed`, `stage.layer`, `dialogue.start`; los eventos propios irán en `events/custom-events.js` dentro de un entorno restringido. Hoy está implementado `camera.target`.
 
-| Evento Echo | Equivale a (Psych) | Argumentos |
+## 5. Convertidor `tools/psych2echo.py`
+
+Convierte un mod Psych (0.7 / 1.0) a este formato y da un informe de qué no pudo traducir. Probado con Pico Mix (17 elementos: 4 personajes, 2 escenarios, 2 canciones con 6 charts, 2 semanas).
+
+## 6. Estado
+
+| Fase | Contenido | Estado |
 |---|---|---|
-| `camera.target` | Set Camera Target / Camera Follow Pos | `who`, `x`, `y`, `duration`, `ease` |
-| `camera.zoom` | Set Camera Zoom / Add Camera Zoom | `zoom`, `duration`, `ease`, `mode` |
-| `camera.bop` | Set Camera Bop | `every`, `intensity` |
-| `camera.shake` | Screen Shake | `duration`, `intensity` |
-| `screen.flash` | (flash) | `color`, `duration` |
-| `char.anim` | Play Animation | `who`, `anim`, `force` |
-| `char.hey` | Hey! | `who` |
-| `char.change` | Change Character | `who`, `to` |
-| `gameplay.speed` | Change Scroll Speed | `speed`, `duration`, `ease` |
-| `gameplay.bpm` | Change BPM | `bpm` |
-| `stage.layer` | Set Property / mostrar-ocultar capa | `layer`, `prop`, `value` |
-| `dialogue.start` | dialogueBox.lua | `file` |
+| 1 | Lector de datos, cargador, convertidor, importación en la web, escenarios por capas, conversión webp | **Hecha**; Pico Mix (Bopeebo y Guns) probado importado y jugando en Chromium |
+| 2 | Biblioteca de eventos nativa + `custom-events.js` | Pendiente |
+| 3 | Diálogos y menús del mod | Pendiente |
+| 4 | Validador con mensajes claros, plantilla de mod vacía, guía para creadores | Pendiente |
 
-## 5. Eventos propios (opcional, `custom-events.js`)
+Pendiente de tu lado: las imágenes base `Nene`, `Pico_FNF_assetss`, `Pico_Intro`, `Pico_Shooting`, `tankmanCaptain` (el cargador avisa de ellas en la consola y usa la copia del juego si existe).
 
-Un archivo pequeño, sin acceso a nada fuera de la API de Echo:
-
-```js
-Echo.event('mi-evento', (ctx, args) => {
-  ctx.char('bf').play('hey');
-  ctx.camera.zoomTo(1.2, 0.5);
-  ctx.tween(ctx.stage.layer('luces'), { alpha: 1 }, 0.3);
-});
-```
-API mínima `ctx`: `char(id)`, `camera`, `stage.layer(id)`, `tween(obj, props, seg, ease)`, `sound(id)`, `time` (ms de la canción). Se ejecuta en un entorno restringido; si hay un error, se ignora ese evento y la canción sigue.
-
-## 6. Convertidor `psych2echo`
-
-`tools/psych2echo.py` (se usa en local o en CI):
-1. Renombra y copia imágenes/audio (`Voices-Player` → `Voices-Player`, quita paréntesis y espacios).
-2. Convierte charts Psych (0.7 y 1.0) al chart Echo (carriles fijos, eventos con nombres Echo).
-3. Convierte `characters/*.json`, `stages/*.json`/`.lua` (las capas simples) y `weeks/*.json`.
-4. Los `.lua` que no se pueden traducir se copian aparte (`legacy/`) y se siguen ejecutando con fengari mientras exista "Mod Scripts".
-5. Imprime un **informe** de qué se convirtió y qué quedó sin traducir.
-
-## 7. Fases
-
-1. **Fase 1 – Base**: `mod.json`, cargador, validador y los formatos de §3 para personajes, charts, canciones, escenarios y semanas. Pico Mix convertido de prueba.
-2. **Fase 2 – Eventos**: biblioteca nativa de §4 (cámara, personajes, pantalla, gameplay) + `custom-events.js`.
-3. **Fase 3 – Diálogos y menús**: `dialogues/*.json`, `menu.json` y la pestaña de mods en Freeplay.
-4. **Fase 4 – Herramientas**: validador con mensajes claros, plantilla de mod vacía y documentación para creadores.
-
-## 8. Decisiones abiertas
-
-* ¿`.json` para datos (recomendado) o `.js` como en tu esquema? Con `.js` los mods podrían traer código en cualquier archivo, lo que complica la seguridad y los errores.
-* ¿Nombre oficial del formato? (`Echo Mods`, `.echomod` para el zip).
-* ¿Los mods viejos de Psych seguirán funcionando como hasta ahora (sí, esa es la idea) o se quiere pedir conversión siempre?
+Para probar: `tools/test/EchoModTest.hx` (corre con `haxe --interp`) y el parámetro de desarrollo `?autosong=<cancion>&mod=<carpeta>&bot=1`.

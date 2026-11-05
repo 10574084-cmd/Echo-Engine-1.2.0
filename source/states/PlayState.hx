@@ -414,6 +414,7 @@ class PlayState extends MusicBeatState
 			case 'school': new states.stages.School(); //Week 6 - Senpai, Roses
 			case 'schoolEvil': new states.stages.SchoolEvil(); //Week 6 - Thorns
 			case 'tank': new states.stages.Tank(); //Week 7 - Ugh, Guns, Stress
+			default: if(echo.mods.EchoStage.has(curStage)) new echo.mods.EchoStage(curStage); //Stage of an Echo mod (layers in its stage file)
 		}
 
 		if(isPixelStage) {
