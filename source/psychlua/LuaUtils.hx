@@ -257,7 +257,7 @@ class LuaUtils
 
 	inline public static function getTextObject(name:String):FlxText
 	{
-		return #if LUA_ALLOWED PlayState.instance.modchartTexts.exists(name) ? PlayState.instance.modchartTexts.get(name) : #end Reflect.getProperty(PlayState.instance, name);
+		return #if LUA_ALLOWED PlayState.instance.modchartTexts.exists(name) ? PlayState.instance.modchartTexts.get(name) : (PlayState.instance.variables.exists(name) && Std.isOfType(PlayState.instance.variables.get(name), FlxText) ? PlayState.instance.variables.get(name) : #end Reflect.getProperty(PlayState.instance, name)#if LUA_ALLOWED ) #end;
 	}
 	
 	public static function isOfTypes(value:Any, types:Array<Dynamic>)

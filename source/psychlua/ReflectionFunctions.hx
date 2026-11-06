@@ -189,6 +189,7 @@ class ReflectionFunctions
 
 	static function parseInstances(args:Array<Dynamic>)
 	{
+		if(args == null) args = []; // Psych 1.0 mods call callMethod('obj.method') with no arguments
 		for (i in 0...args.length)
 		{
 			var myArg:String = cast args[i];
@@ -228,14 +229,16 @@ class ReflectionFunctions
 			return null;
 		}
 
+		var owner:Dynamic = classObj; // the object the method belongs to (on JS methods are not bound, "this" has to be given)
 		for (i in 0...split.length)
 		{
+			owner = obj;
 			obj = LuaUtils.getVarInArray(obj, split[i].trim());
 			//trace(obj, split[i]);
 		}
 
 		funcToRun = cast obj;
 		//trace('end: $obj');
-		return funcToRun != null ? Reflect.callMethod(obj, funcToRun, args) : null;
+		return funcToRun != null ? Reflect.callMethod(owner, funcToRun, args) : null;
 	}
 }

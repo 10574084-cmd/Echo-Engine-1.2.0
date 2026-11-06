@@ -29,6 +29,25 @@ class EchoDirectSong
 			if (c != null)
 				out.push('anim ${c.curCharacter}: ${c.animation.curAnim == null ? "none" : c.animation.curAnim.name + "#" + c.animation.curAnim.curFrame + (c.animation.curAnim.finished ? " finished" : "") + (c.animation.paused ? " PAUSED" : "")} frames=${c.frames == null ? "null" : Std.string(c.frames.numFrames)} specialAnim=${c.specialAnim} skipDance=${c.skipDance} update=${c.active} timeScale=${flixel.FlxG.animationTimeScale}');
 		out.push('members=${g.members.length}');
+		var broken:Array<String> = [];
+		function walk(o:Dynamic, where:String, depth:Int):Void
+		{
+			if (o == null || depth > 4) return;
+			if (Std.isOfType(o, flixel.FlxSprite) && !Std.isOfType(o, flixel.group.FlxSpriteGroup) && !Std.isOfType(o, objects.NoteSplash))
+			{
+				var sp:flixel.FlxSprite = cast o;
+				if (sp.graphic == null || (sp.graphic.key != null && sp.graphic.key.indexOf('logo/default') >= 0))
+					broken.push('$where ${Type.getClassName(Type.getClass(sp))} at ${Std.int(sp.x)},${Std.int(sp.y)}');
+			}
+			if (Std.isOfType(o, flixel.group.FlxTypedGroup))
+			{
+				var grp:flixel.group.FlxTypedGroup<Dynamic> = cast o;
+				for (m in grp.members) walk(m, where, depth + 1);
+			}
+		}
+		for (m in g.members) walk(m, 'play', 0);
+		out.push('BROKEN-SPRITES=${broken.length}');
+		for (b in broken) out.push('  broken: $b');
 		for (m in g.members)
 		{
 			var sp:flixel.FlxSprite = Std.isOfType(m, flixel.FlxSprite) ? cast m : null;
@@ -45,6 +64,7 @@ class EchoDirectSong
 
 	public static function check():Void
 	{
+		EchoKeep.touch();
 		var query:String = Browser.location.search;
 		var marker = 'autosong=';
 		var at = query.indexOf(marker);

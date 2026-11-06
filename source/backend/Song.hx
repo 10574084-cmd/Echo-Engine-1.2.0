@@ -50,7 +50,7 @@ class Song
 	public var player2:String = 'dad';
 	public var gfVersion:String = 'gf';
 
-	private static function onLoadJson(songJson:Dynamic) // Convert old charts to newest format
+	private static function onLoadJson(songJson:Dynamic, flipLanes:Bool = true) // Convert old charts to newest format
 	{
 		if(songJson.gfVersion == null)
 		{
@@ -61,7 +61,7 @@ class Song
 		// Psych Engine 1.0 charts ("psych_v1..."): lanes 0-3 are ALWAYS the player's and "mustHitSection" is only for the camera.
 		// This engine (0.7) decides the side with "mustHitSection XOR lane > 3", so on the sections where mustHitSection is false the lanes are swapped.
 		// (Without this, Pico Mix made you play the enemy's notes while the enemy's voice track was the one that got muted on a miss.)
-		if(songJson.format != null && StringTools.startsWith(Std.string(songJson.format), 'psych_v1') && songJson.notes != null)
+		if(flipLanes && songJson.format != null && StringTools.startsWith(Std.string(songJson.format), 'psych_v1') && songJson.notes != null)
 		{
 			for (secNum in 0...songJson.notes.length)
 			{
@@ -104,7 +104,13 @@ class Song
 		this.bpm = bpm;
 	}
 
-	public static function loadFromJson(jsonInput:String, ?folder:String):SwagSong
+	/** Psych 1.0 name, used by scripts (callMethodFromClass('backend.Song', 'getChart', {name, folder})): the chart exactly as it is written, lanes are not swapped */
+	public static function getChart(jsonInput:String, ?folder:String):SwagSong
+	{
+		return loadFromJson(jsonInput, folder, false);
+	}
+
+	public static function loadFromJson(jsonInput:String, ?folder:String, flipLanes:Bool = true):SwagSong
 	{
 		var rawJson = null;
 		
@@ -152,7 +158,7 @@ class Song
 
 		var songJson:Dynamic = parseJSONshit(rawJson);
 		if(jsonInput != 'events') StageData.loadDirectory(songJson);
-		onLoadJson(songJson);
+		onLoadJson(songJson, flipLanes);
 		return songJson;
 	}
 

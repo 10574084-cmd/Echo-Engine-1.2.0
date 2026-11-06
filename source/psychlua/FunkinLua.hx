@@ -792,9 +792,9 @@ class FunkinLua {
 		});
 
 		// others
-		Lua_helper.add_callback(lua, "triggerEvent", function(name:String, arg1:Dynamic, arg2:Dynamic) {
-			var value1:String = arg1;
-			var value2:String = arg2;
+		Lua_helper.add_callback(lua, "triggerEvent", function(name:String, ?arg1:Dynamic, ?arg2:Dynamic) {
+			var value1:String = arg1 == null ? '' : arg1; // Psych 1.0 scripts may leave the values out
+			var value2:String = arg2 == null ? '' : arg2;
 			game.triggerEvent(name, value1, value2, Conductor.songPosition);
 			//trace('Triggered event: ' + name + ', ' + value1 + ', ' + value2);
 			return true;
@@ -1512,7 +1512,7 @@ class FunkinLua {
 		#if (html5 && !HSCRIPT_ALLOWED)
 		// No HScript on the web (yet): runHaxeCode / addHaxeLibrary are ignored and runHaxeFunction runs the few known jobs natively (see WebHaxeShim),
 		// so Lua scripts that call them keep running (a missing function would stop the whole script, e.g. a stage before it builds its background)
-		addLocalCallback('runHaxeCode', function(?a:Dynamic, ?b:Dynamic, ?c:Dynamic, ?d:Dynamic):Dynamic return null);
+		addLocalCallback('runHaxeCode', function(code:String, ?vars:Dynamic, ?c:Dynamic, ?d:Dynamic):Dynamic return WebHaxeShim.runCode(code, vars));
 		addLocalCallback('addHaxeLibrary', function(?a:Dynamic, ?b:Dynamic):Dynamic return null);
 		addLocalCallback('runHaxeFunction', function(name:String, ?args:Array<Dynamic>):Dynamic return WebHaxeShim.call(name, args));
 		#end

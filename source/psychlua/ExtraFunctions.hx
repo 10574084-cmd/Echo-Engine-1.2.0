@@ -231,6 +231,7 @@ class ExtraFunctions
 			return str.endsWith(end);
 		});
 		Lua_helper.add_callback(lua, "stringSplit", function(str:String, split:String) {
+			if(str == null) return ['']; // e.g. a property that does not exist: the script gets an empty text, not a crash
 			return str.split(split);
 		});
 		Lua_helper.add_callback(lua, "stringTrim", function(str:String) {
