@@ -108,7 +108,7 @@ class EchoModLoader
 			var psychImages:Array<String> = [];
 			for (image in images)
 			{
-				var base = ctx.copyAtlas('characters/' + image, 'images/characters/' + image);
+				var base = ctx.copyAtlas('characters/' + image, 'images/characters/' + image) || ctx.files.exists('images/characters/' + image + '.png') || ctx.files.exists('images/characters/' + image + '/Animation.json');
 				if (!base) ctx.warn('characters/$id: the image "$image" is not in the mod (characters/$image.png or .webp + .xml); the game\'s own copy is used if it has one');
 				psychImages.push('characters/' + image);
 			}
@@ -157,8 +157,11 @@ class EchoModLoader
 	{
 		for (id in ctx.dataIds('stages'))
 		{
+			// a stage that already is in the engine's format (it has its own script, or Psych fields) stays exactly as it is
+			if (ctx.files.exists('stages/$id.lua') || ctx.files.exists('stages/$id.hx')) { ctx.report.converted.push('stage: $id (kept with its script)'); continue; }
 			var s:Dynamic = ctx.data('stages/$id');
 			if (s == null) continue;
+			if (Reflect.hasField(s, 'defaultZoom') || Reflect.hasField(s, 'boyfriend')) { ctx.report.converted.push('stage: $id (already in the engine format)'); continue; }
 
 			var layers:Array<Dynamic> = [];
 			for (l in (cast list(Reflect.field(s, 'layers'), []) : Array<Dynamic>))
@@ -268,7 +271,14 @@ class EchoModLoader
 			{
 				case 'camera.target':
 					var who = str(Reflect.field(args, 'who'), 'dad').toLowerCase();
-					if (Reflect.field(args, 'x') != null || Reflect.field(args, 'y') != null)
+					var raw:String = Reflect.field(args, 'event');
+					if (raw != null)
+					{
+						// the event keeps its own values: a script of the mod handles it (and the chart still learns which side the section is)
+						psychEvents.push([t, [[raw, str(Reflect.field(args, 'v1'), ''), str(Reflect.field(args, 'v2'), '')]]]);
+						cameraAt.push({t: t, who: who == 'boyfriend' ? 'bf' : (who == 'opponent' ? 'dad' : (who == 'girlfriend' ? 'gf' : who))});
+					}
+					else if (Reflect.field(args, 'x') != null || Reflect.field(args, 'y') != null)
 						psychEvents.push([t, [['Camera Follow Pos', Std.string(num(Reflect.field(args, 'x'), 0)), Std.string(num(Reflect.field(args, 'y'), 0))]]]);
 					else
 						cameraAt.push({t: t, who: who == 'boyfriend' ? 'bf' : (who == 'opponent' ? 'dad' : (who == 'girlfriend' ? 'gf' : who))});
@@ -426,7 +436,7 @@ class EchoModLoader
 				weekBackground: str(Reflect.field(w, 'background'), 'stage'),
 				weekBefore: str(Reflect.field(w, 'before'), 'tutorial'),
 				storyName: str(Reflect.field(w, 'title'), id),
-				weekName: str(Reflect.field(w, 'title'), id),
+				weekName: str(Reflect.field(w, 'name'), str(Reflect.field(w, 'title'), id)),
 				freeplayColor: rgb(Reflect.field(w, 'color'), [146, 113, 253]),
 				startUnlocked: Reflect.field(w, 'locked') != true,
 				hideStoryMode: Reflect.field(w, 'hideStory') == true,
@@ -456,11 +466,18 @@ class EchoModLoader
 		ctx.report.converted.push('week: echo-songs (${rows.length} songs, made automatically)');
 	}
 
-	/** The engine finds a song by its name ("Bopeebo Pico" -> bopeebo-pico), so the name shown is the folder name in words. */
+	/** The engine finds a song by its name ("Bopeebo (Pico Mix)" -> bopeebo-(pico-mix)), so the name shown is the folder name in words. */
 	static function songName(id:String):String
 	{
 		var words = id.split('-');
-		return [for (w in words) w.length == 0 ? w : w.charAt(0).toUpperCase() + w.substr(1)].join(' ');
+		var out:Array<String> = [];
+		for (w in words)
+		{
+			if (w.length == 0) { out.push(w); continue; }
+			var at = (w.charAt(0) == '(') ? 1 : 0; // "(pico" -> "(Pico"
+			out.push(w.substr(0, at) + w.charAt(at).toUpperCase() + w.substr(at + 1));
+		}
+		return out.join(' ');
 	}
 
 	// ------------------------------------------------------------------------------------------------------------------

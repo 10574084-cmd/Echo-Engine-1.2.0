@@ -28,6 +28,7 @@ class EchoDirectSong
 		for (c in [g.boyfriend, g.dad, g.gf])
 			if (c != null)
 				out.push('anim ${c.curCharacter}: ${c.animation.curAnim == null ? "none" : c.animation.curAnim.name + "#" + c.animation.curAnim.curFrame + (c.animation.curAnim.finished ? " finished" : "") + (c.animation.paused ? " PAUSED" : "")} frames=${c.frames == null ? "null" : Std.string(c.frames.numFrames)} specialAnim=${c.specialAnim} skipDance=${c.skipDance} update=${c.active} timeScale=${flixel.FlxG.animationTimeScale}');
+		out.push('level=${backend.Paths.currentLevel} train=${backend.Paths.getPath("images/philly/train.png", IMAGE)} exists=${openfl.utils.Assets.exists(backend.Paths.getPath("images/philly/train.png", IMAGE), IMAGE)} libs=${[for (n in ["week3", "week5"]) n + ":" + openfl.utils.Assets.hasLibrary(n)]}');
 		out.push('members=${g.members.length}');
 		var broken:Array<String> = [];
 		function walk(o:Dynamic, where:String, depth:Int):Void

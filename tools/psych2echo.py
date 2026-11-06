@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """psych2echo: turns a Psych Engine mod (0.7 or 1.0) into the Echo Mods structure (see ECHO_MODS.md).
 
-usage: psych2echo.py <psych mod folder> <output folder> [--songs a,b,c] [--webp] [--json]
+usage: psych2echo.py <psych mod folder> <output folder> [--songs a,b,c] [--webp] [--json] [--no-hybrid]
 
   --songs   only these songs (folder names of the Psych mod, e.g. "bopeebo-(pico-mix)")
   --webp    write the images of characters and stages as .webp (smaller; the game converts them back after the import)
   --json    write the data files as .json instead of .js ("export default { ... }")
+
+  --no-hybrid  only translate the data (see below). Without it ("hybrid", the default) everything that is not data is kept as it is:
+               scripts, custom events and note types, stages with a .lua, character scripts, shaders, images, sounds, videos, fonts, dialogues.
+               Events are passed on by name so the scripts that handle them keep working. Use it for a mod that has its Lua already working.
 
 What is translated: mod info, characters (all their atlases), simple stages (the sprites that a stage .lua makes with makeLuaSprite /
 makeAnimatedLuaSprite), songs (audio), charts (lanes, camera and the events that Echo has), weeks and health icons.
@@ -16,7 +20,7 @@ import argparse, json, os, re, shutil, sys
 # ---------------------------------------------------------------------------------------------------------------------------------
 def slug(name):
     s = name.lower().replace(' ', '-')
-    s = re.sub(r'[^a-z0-9\-_]', '', s)
+    s = re.sub(r'[^a-z0-9\-_()]', '', s)  # parentheses stay: "bopeebo-(pico-mix)" is what the game shows as "Bopeebo (Pico Mix)"
     return re.sub(r'-+', '-', s).strip('-')
 
 def read_json(path):
@@ -68,7 +72,7 @@ def convert_characters(mod, out, as_json, webp, report, used):
     for fn in sorted(os.listdir(cdir)):
         full = os.path.join(cdir, fn)
         if fn.endswith('.lua') or fn.endswith('.hx'):
-            report.append('legacy: characters/' + fn + ' (script, not translated)')
+            report.append(('script kept: characters/' if HYBRID[0] else 'legacy: characters/') + fn + (' (runs with the mod scripts)' if HYBRID[0] else ' (script, not translated)'))
             continue
         if not fn.endswith('.json') or not os.path.isfile(full):
             continue
@@ -80,6 +84,11 @@ def convert_characters(mod, out, as_json, webp, report, used):
         names = []
         for img in images:
             short = img[len('characters/'):] if img.startswith('characters/') else img
+            if HYBRID[0]:
+                names.append(short)  # the image stays in images/ (copied with everything else)
+                if not os.path.exists(os.path.join(mod, 'images', img + '.png')):
+                    report.append('missing image: %s (needed by character %s)' % (img, cid))
+                continue
             if copy_image(os.path.join(mod, 'images'), img, os.path.join(out, 'characters'), short, webp, report):
                 names.append(short)
             else:
@@ -99,6 +108,8 @@ def convert_characters(mod, out, as_json, webp, report, used):
         report.append('character: ' + cid)
 
         icon = c.get('healthicon', cid)
+        if HYBRID[0]:
+            continue
         for icon_file in ('icons/icon-' + icon, 'icons/' + icon):
             if copy_image(os.path.join(mod, 'images'), icon_file, os.path.join(out, 'images', 'health-icons'), icon, False, report):
                 break
@@ -122,6 +133,9 @@ def convert_stages(mod, out, as_json, webp, report, used):
         s = read_json(os.path.join(sdir, fn))
         layers = []
         lua = os.path.join(sdir, sid + '.lua')
+        if HYBRID[0] and os.path.exists(lua):
+            report.append('stage kept with its script: ' + sid)
+            continue
         if os.path.exists(lua):
             text = open(lua, encoding='utf-8', errors='ignore').read()
             text = re.sub(r'--\[\[.*?\]\]', '', text, flags=re.S)
@@ -169,8 +183,16 @@ def who_name(v):
     if v in ('2', 'gf', 'girlfriend'): return 'gf'
     return 'dad'
 
+HYBRID = [True]
+
 def convert_event(name, v1, v2):
     """a Psych event -> (Echo name, args) or None when it has no Echo equivalent"""
+    if HYBRID[0]:
+        # the camera target also tells the chart which side the section belongs to; every event keeps its own values for the scripts
+        if name == 'Set Camera Target':
+            first = str(v1).split(',')[0].strip()
+            return 'camera.target', {'who': who_name(first), 'event': name, 'v1': v1, 'v2': v2}
+        return name, {'v1': v1, 'v2': v2}
     if name == 'Set Camera Target':
         parts = [p.strip() for p in str(v1).split(',')]
         if not parts or parts[0] == '':
@@ -304,18 +326,106 @@ def convert_weeks(mod, out, as_json, report, ids):
             if match is None: continue
             songs.append({'id': match, 'name': s[0], 'icon': s[1], 'color': s[2]})
         if not songs: continue
-        weeks.append({'id': fn[:-5], 'title': w.get('storyName', fn[:-5]), 'songs': songs,
+        extra = {}
+        if w.get('weekName'): extra['name'] = w['weekName']
+        if w.get('weekBefore'): extra['before'] = w['weekBefore']
+        if w.get('startUnlocked') is False: extra['locked'] = True
+        if w.get('difficulties'): extra['difficulties'] = w['difficulties']
+        if w.get('freeplayColor'): extra['color'] = w['freeplayColor']
+        weeks.append({**extra, 'id': fn[:-5], 'title': w.get('storyName', fn[:-5]), 'songs': songs,
                       'characters': w.get('weekCharacters', ['', 'bf', 'gf']), 'background': w.get('weekBackground', 'stage'),
                       'hideStory': bool(w.get('hideStoryMode', False)), 'hideFreeplay': bool(w.get('hideFreeplay', False))})
     write_data(out, 'weeks/weeks', {'weeks': weeks}, as_json)
     report.append('weeks: %d' % len(weeks))
 
+# Small fixes for mistakes in the scripts of Pico Mix that show up as errors on every frame (the scripts are copied with the fix applied).
+# (path ending, [(old text, new text)])
+PATCHES = [
+    ('stages/phillyErect.lua', [('function updateGradient(elapsed)\n', "function updateGradient(elapsed)\n\tif not luaSpriteExists('gradient') then return end -- echo: the gradient only exists when the song uses 'Philly Glow'\n")]),
+    ('stages/spookyErect.lua', [('stageLightingt', 'stageObject')]),
+    ('/dialogueBox.lua', [
+        ('if dialogueEnded == false then', 'if dialogueEnded == false and dialogueData.pausePos ~= nil then'),
+        ("dialogueData.text:gsub('|', '')", "(dialogueData.text or ''):gsub('|', '')"),
+        ("setProperty(object..'.alpha', getProperty(object..'.alpha') - (1 / 5) * 0.7)", "if getProperty(object..'.alpha') ~= nil then setProperty(object..'.alpha', getProperty(object..'.alpha') - (1 / 5) * 0.7) end"),
+        ("setProperty(object..'.alpha', getProperty(object..'.alpha') - (1 / 5))", "if getProperty(object..'.alpha') ~= nil then setProperty(object..'.alpha', getProperty(object..'.alpha') - (1 / 5)) end"),
+    ]),
+]
+
+# Stages that use pictures of the base game's weeks (the game keeps them in a library per week, loaded by the "directory" of the stage)
+STAGE_LIBRARIES = {'phillyErect': 'week3', 'mallErect': 'week5'}
+
+def patch_stage_json(dst, dst_rel, report):
+    name = os.path.basename(dst_rel)[:-5]
+    lib = STAGE_LIBRARIES.get(name)
+    if not lib or not dst_rel.startswith('stages/'): return
+    data = read_json(dst)
+    if not data.get('directory'):
+        data['directory'] = lib
+        with open(dst, 'w', encoding='utf-8') as f: json.dump(data, f, indent=1)
+        report.append('stage %s: pictures of the base game come from %s' % (name, lib))
+
+def patch_script(dst, dst_rel, report):
+    for ending, edits in PATCHES:
+        if not dst_rel.endswith(ending): continue
+        text = open(dst, encoding='utf-8', errors='surrogateescape').read()
+        done = 0
+        for old, new in edits:
+            if old in text:
+                text = text.replace(old, new); done += 1
+            else:
+                report.append('patch not applied (text not found): %s -> %s' % (dst_rel, old[:40].strip()))
+        open(dst, 'w', encoding='utf-8', errors='surrogateescape').write(text)
+        report.append('patched %s (%d fixes)' % (dst_rel, done))
+
+def copy_rest(mod, out, ids, report):
+    """hybrid: everything that is not data goes over as it is"""
+    chart_names = {}
+    for folder, sid in ids.items():
+        chart_names[folder] = sid
+    lua_stages = set()
+    sdir = os.path.join(mod, 'stages')
+    if os.path.isdir(sdir):
+        lua_stages = {f[:-4] for f in os.listdir(sdir) if f.endswith('.lua')}
+    count = 0
+    for root, dirs, files in os.walk(mod):
+        rel_root = os.path.relpath(root, mod).replace(os.sep, '/')
+        rel_root = '' if rel_root == '.' else rel_root
+        parts = rel_root.split('/') if rel_root else []
+        if parts[:2] == ['stages', 'archive'] or (parts and parts[0] in ('songs',)):
+            dirs[:] = []
+            continue
+        for fn in files:
+            rel = (rel_root + '/' if rel_root else '') + fn
+            low = fn.lower()
+            if rel in ('pack.json', 'readme.txt'): continue
+            if parts[:1] == ['characters'] and len(parts) == 1 and low.endswith('.json'): continue   # translated
+            if parts[:1] == ['weeks'] and len(parts) == 1 and low.endswith('.json'): continue         # translated
+            if parts[:1] == ['stages'] and len(parts) == 1 and low.endswith('.json') and fn[:-5] not in lua_stages: continue
+            if parts[:1] == ['images'] and len(parts) > 1 and parts[1] == 'health-icons': continue
+            dst_rel = rel
+            if parts[:1] == ['data'] and len(parts) == 2:
+                folder = parts[1]
+                if folder in chart_names:
+                    if low == 'events.json': continue                       # already inside the charts
+                    if low.endswith('.json') and (fn[:-5] == folder or fn[:-5].startswith(folder + '-')): continue  # the charts
+                    dst_rel = 'data/' + chart_names[folder] + '/' + fn
+            elif parts[:1] == ['data'] and len(parts) > 2 and parts[1] in chart_names:
+                dst_rel = '/'.join(['data', chart_names[parts[1]]] + parts[2:] + [fn])
+            dst = os.path.join(out, dst_rel)
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copyfile(os.path.join(root, fn), dst)
+            if low.endswith('.lua'): patch_script(dst, dst_rel, report)
+            elif low.endswith('.json') and parts[:1] == ['stages']: patch_stage_json(dst, dst_rel, report)
+            count += 1
+    report.append('copied as they are: %d files' % count)
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('mod'); ap.add_argument('out')
-    ap.add_argument('--songs'); ap.add_argument('--webp', action='store_true'); ap.add_argument('--json', action='store_true')
+    ap.add_argument('--songs'); ap.add_argument('--webp', action='store_true'); ap.add_argument('--json', action='store_true'); ap.add_argument('--no-hybrid', action='store_true')
     a = ap.parse_args()
     only = [s.strip() for s in a.songs.split(',')] if a.songs else None
+    HYBRID[0] = not a.no_hybrid
     report = []
     if os.path.exists(a.out): shutil.rmtree(a.out)
     os.makedirs(a.out)
@@ -324,6 +434,7 @@ def main():
     convert_characters(a.mod, a.out, a.json, a.webp, report, chars if only else None)
     convert_stages(a.mod, a.out, a.json, a.webp, report, stages if only else None)
     convert_weeks(a.mod, a.out, a.json, report, ids)
+    if HYBRID[0]: copy_rest(a.mod, a.out, ids, report)
     print('\n'.join(report))
 
 if __name__ == '__main__':

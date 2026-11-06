@@ -81,6 +81,12 @@ class ModImporter
 	{
 		var toSave:Map<String, Bytes> = new Map();
 		var count = 0;
+		if (echo.mods.EchoModLoader.isEchoMod(files)) // a built-in mod in the Echo structure is translated like an imported one
+		{
+			var report = echo.mods.EchoModLoader.process(files);
+			for (w in report.warnings) trace('[Echo mod] $mod: $w');
+			trace('[Echo mod] $mod: ' + report.converted.length + ' things read');
+		}
 		for (path => data in files)
 		{
 			toSave.set('mods/$mod/$path', data);
@@ -91,10 +97,13 @@ class ModImporter
 		backend.Mods.updatedOnState = false; // rescan: the new mod shows up in the list
 
 		var result:ImportResult = {mods: [mod], files: count};
-		FontLoader.registerAll(function()
+		echo.mods.EchoImages.convertMods([mod], function(converted:Int, failed:Int)
 		{
-			for (callback in onImported.copy()) callback(result);
-			done(result);
+			FontLoader.registerAll(function()
+			{
+				for (callback in onImported.copy()) callback(result);
+				done(result);
+			});
 		});
 	}
 

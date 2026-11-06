@@ -7,8 +7,16 @@ tmp=$(mktemp -d)
 
 if gh release download CLAUDE --repo "$GITHUB_REPOSITORY" --pattern 'pico_mix_psych_port.zip' --dir "$tmp" && [ -s "$tmp/pico_mix_psych_port.zip" ]; then
 	mkdir -p "$site/builtin"
-	unzip -q "$tmp/pico_mix_psych_port.zip" -d "$site/builtin"
-	rm -rf "$site/builtin/__MACOSX"
+	mkdir -p "$tmp/src"
+	unzip -q "$tmp/pico_mix_psych_port.zip" -d "$tmp/src"
+	rm -rf "$tmp/src/__MACOSX"
+	# Pico Mix is shipped in the Echo Mods structure (tools/psych2echo.py, ECHO_MODS.md); if the conversion fails the Psych copy is used as it is
+	if python3 "$(dirname "$0")/psych2echo.py" "$tmp/src/Pico Mix" "$site/builtin/Pico Mix" > "$tmp/convert.log" 2>&1; then
+		echo "Pico Mix converted to Echo Mods:"; grep -v "^character: \|^song: " "$tmp/convert.log" | head -40
+	else
+		echo "::warning title=Built-in mods::psych2echo failed, Pico Mix is published in its Psych format."; tail -20 "$tmp/convert.log"
+		rm -rf "$site/builtin/Pico Mix"; cp -r "$tmp/src/Pico Mix" "$site/builtin/Pico Mix"
+	fi
 	python3 "$(dirname "$0")/make_builtin_index.py" "$site/builtin"
 	if [ -n "$(find "$site/builtin" -type f -size +95M)" ]; then echo "A built-in file is too big for GitHub Pages"; exit 1; fi
 	du -sh "$site/builtin"

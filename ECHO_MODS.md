@@ -50,15 +50,26 @@ Biblioteca nativa `echo.events` con nombres como `camera.target`, `camera.zoom`,
 
 Convierte un mod Psych (0.7 / 1.0) a este formato y da un informe de qué no pudo traducir. Probado con Pico Mix (17 elementos: 4 personajes, 2 escenarios, 2 canciones con 6 charts, 2 semanas).
 
-## 6. Estado
+## 6. Modo híbrido (así está portado Pico Mix)
+
+`psych2echo.py` convierte los **datos** (mod, personajes, charts, canciones, semanas) al formato Echo y deja **tal cual** todo lo que es código o recursos: escenarios con `.lua`, scripts de personajes (Nene, bocina Abot), `scripts/`, `custom_events/`, `custom_notetypes/`, shaders, imágenes, sonidos, videos, fuentes y diálogos. Los eventos del chart pasan con su nombre y sus valores (el cargador los entrega a los scripts) y `camera.target` además le dice al chart de qué lado es cada sección. Con `--no-hybrid` solo se traducen los datos.
+
+Además aplica unos pocos **arreglos a errores del propio mod** que fallaban en cada frame (`PATCHES` en el script): `phillyErect.lua` (degradado inexistente sin el evento Philly Glow), `spookyErect.lua` (variable mal escrita) y los `dialogueBox.lua` de Senpai y Roses.
+
+Comprobado sobre las 15 canciones (45 dificultades): 0 notas perdidas y los mismos eventos, tiempos y valores que el original.
+
+El juego trae Pico Mix ya convertido: en el despliegue (`tools/add_builtin.sh`) se descarga el zip Psych de la release `CLAUDE`, se convierte y se publica.
+
+## 7. Estado
 
 | Fase | Contenido | Estado |
 |---|---|---|
 | 1 | Lector de datos, cargador, convertidor, importación en la web, escenarios por capas, conversión webp | **Hecha**; Pico Mix (Bopeebo y Guns) probado importado y jugando en Chromium |
-| 2 | Biblioteca de eventos nativa + `custom-events.js` | Pendiente |
+| 1b | Pico Mix completo en modo híbrido (15 canciones, 7 escenarios, Nene/Abot) | **Hecho**; auditoría de las 15 canciones en el navegador |
+| 2 | Biblioteca de eventos nativa + `custom-events.js` (reemplazar los `.lua` de escenarios y eventos) | Pendiente |
 | 3 | Diálogos y menús del mod | Pendiente |
 | 4 | Validador con mensajes claros, plantilla de mod vacía, guía para creadores | Pendiente |
 
-Pendiente de tu lado: las imágenes base `Nene`, `Pico_FNF_assetss`, `Pico_Intro`, `Pico_Shooting`, `tankmanCaptain` (el cargador avisa de ellas en la consola y usa la copia del juego si existe).
+Pendiente de tu lado: las imágenes base `Nene`, `Pico_FNF_assetss`, `Pico_Intro`, `Pico_Shooting`, `Pico_Death`, `tankmanCaptain` (no están en ningún zip del mod) (el cargador avisa de ellas en la consola y usa la copia del juego si existe).
 
 Para probar: `tools/test/EchoModTest.hx` (corre con `haxe --interp`) y el parámetro de desarrollo `?autosong=<cancion>&mod=<carpeta>&bot=1`.
