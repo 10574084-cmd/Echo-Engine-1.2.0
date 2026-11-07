@@ -406,7 +406,11 @@ class ChartingState extends MusicBeatState
 			//trace('CHECKED!');
 		};
 
-		var saveButton:FlxButton = new FlxButton(110, 8, "Save", function()
+		var saveButton:FlxButton = new FlxButton(110, 8, "Save (Echo)", function()
+		{
+			saveEchoChart();
+		});
+		var savePsychButton:FlxButton = new FlxButton(110, 68, "Save Psych", function()
 		{
 			saveLevel();
 		});
@@ -597,6 +601,7 @@ class ChartingState extends MusicBeatState
 		tab_group_song.add(clear_events);
 		tab_group_song.add(clear_notes);
 		tab_group_song.add(saveButton);
+		tab_group_song.add(savePsychButton);
 		tab_group_song.add(saveEvents);
 		tab_group_song.add(reloadSong);
 		tab_group_song.add(reloadSongJson);
@@ -3167,6 +3172,21 @@ class ChartingState extends MusicBeatState
 			_file.addEventListener(IOErrorEvent.IO_ERROR, onSaveError);
 			_file.save(data.trim(), Paths.formatToSongPath(_song.song) + ".json");
 		}
+	}
+
+	/** Saves the chart in Echo format (plain JSON: charts/<song>/<difficulty>.json of an Echo mod, see ECHO_MODS.md). */
+	private function saveEchoChart()
+	{
+		if(_song.events != null && _song.events.length > 1) _song.events.sort(sortByTime);
+		var diff:String = Difficulty.getString();
+		if(diff == null || diff == '') diff = Difficulty.getDefault();
+		var data:String = echo.mods.EchoChart.toText(echo.mods.EchoChart.fromSong(_song));
+
+		_file = new FileReference();
+		_file.addEventListener(#if desktop Event.SELECT #else Event.COMPLETE #end, onSaveComplete);
+		_file.addEventListener(Event.CANCEL, onSaveCancel);
+		_file.addEventListener(IOErrorEvent.IO_ERROR, onSaveError);
+		_file.save(data, diff.toLowerCase() + ".json");
 	}
 
 	function sortByTime(Obj1:Array<Dynamic>, Obj2:Array<Dynamic>):Int

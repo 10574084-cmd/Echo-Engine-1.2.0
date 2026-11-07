@@ -71,6 +71,7 @@ class EchoModLoader
 			description: str(Reflect.field(meta, 'description'), ''),
 			color: color,
 			restart: false,
+			echo: true, // the engine's native event library (echo.EchoEvents) is on for this mod
 			runsGlobally: Reflect.field(meta, 'runsGlobally') == true
 		};
 		ctx.writeJson('pack.json', pack);
@@ -158,38 +159,49 @@ class EchoModLoader
 		for (id in ctx.dataIds('stages'))
 		{
 			// a stage that already is in the engine's format (it has its own script, or Psych fields) stays exactly as it is
-			if (ctx.files.exists('stages/$id.lua') || ctx.files.exists('stages/$id.hx')) { ctx.report.converted.push('stage: $id (kept with its script)'); continue; }
 			var s:Dynamic = ctx.data('stages/$id');
 			if (s == null) continue;
 			if (Reflect.hasField(s, 'defaultZoom') || Reflect.hasField(s, 'boyfriend')) { ctx.report.converted.push('stage: $id (already in the engine format)'); continue; }
+			// a stage with a script and no layers of its own stays as it is (a script of the mod draws it)
+			if ((ctx.files.exists('stages/$id.lua') || ctx.files.exists('stages/$id.hx')) && Reflect.field(s, 'layers') == null && Reflect.field(s, 'behaviors') == null) { ctx.report.converted.push('stage: $id (kept with its script)'); continue; }
 
 			var layers:Array<Dynamic> = [];
+			var ids:Array<String> = [];
 			for (l in (cast list(Reflect.field(s, 'layers'), []) : Array<Dynamic>))
 			{
-				var image = str(Reflect.field(l, 'image'), '');
-				if (image == '') { ctx.warn('stages/$id: a layer has no image'); continue; }
-				if (!ctx.copyAtlas('stages/images/' + image, 'images/echo-stages/' + image))
-					ctx.warn('stages/$id: the image "$image" was not found (stages/images/$image.png or .webp)');
-				var anim:Dynamic = Reflect.field(l, 'anim');
-				layers.push({
-					image: 'echo-stages/' + image,
-					x: num(Reflect.field(l, 'x'), 0),
-					y: num(Reflect.field(l, 'y'), 0),
-					scale: num(Reflect.field(l, 'scale'), 1),
-					scroll: pair(Reflect.field(l, 'scroll'), [1, 1]),
-					alpha: num(Reflect.field(l, 'alpha'), 1),
-					flipX: Reflect.field(l, 'flipX') == true,
-					antialiasing: Reflect.field(l, 'antialiasing') != false,
-					front: Reflect.field(l, 'front') == true,
-					anim: anim
-				});
+				var image:String = Reflect.field(l, 'image');
+				var path:String = null;
+				if (image != null && image != '')
+				{
+					// a picture that is already in the mod's images/ is used where it is; otherwise it comes from stages/images/
+					if (ctx.files.exists('images/$image.png') || ctx.files.exists('images/$image.webp') || ctx.files.exists('images/$image.xml')) path = image;
+					else if (ctx.copyAtlas('stages/images/' + image, 'images/echo-stages/' + image)) path = 'echo-stages/' + image;
+					else if (image.indexOf('/') >= 0) path = image; // a picture of the game itself (philly/window...)
+					else { ctx.warn('stages/$id: the image "$image" was not found (images/$image.png or stages/images/$image.png)'); continue; }
+				}
+				else if (Reflect.field(l, 'color') == null) { ctx.warn('stages/$id: a layer has no image and no color'); continue; }
+
+				var out:Dynamic = {};
+				for (k in Reflect.fields(l)) Reflect.setField(out, k, Reflect.field(l, k));
+				if (path != null) Reflect.setField(out, 'image', path);
+				if (Reflect.field(l, 'id') != null) ids.push(Std.string(Reflect.field(l, 'id')));
+				if (Reflect.field(out, 'x') == null) Reflect.setField(out, 'x', 0);
+				if (Reflect.field(out, 'y') == null) Reflect.setField(out, 'y', 0);
+				if (Reflect.field(out, 'scroll') == null) Reflect.setField(out, 'scroll', [1, 1]);
+				layers.push(out);
+			}
+			for (f in (cast list(Reflect.field(s, 'filters'), []) : Array<Dynamic>))
+			{
+				var t:String = Reflect.field(f, 'target');
+				if (t == null || Reflect.field(f, 'shader') == null) ctx.warn('stages/$id: a filter needs "target" and "shader"');
+				else if (['bf', 'dad', 'gf'].indexOf(t) < 0 && ids.indexOf(t) < 0) ctx.warn('stages/$id: the filter points to "$t", which is not a layer id');
+				else if (!ctx.files.exists('shaders/' + Reflect.field(f, 'shader') + '.frag')) ctx.warn('stages/$id: the shader "' + Reflect.field(f, 'shader') + '" is not in shaders/');
 			}
 
 			var bf = pair(Reflect.field(s, 'bf'), [770, 100]);
 			var dad = pair(Reflect.field(s, 'dad'), [100, 100]);
 			var gf = pair(Reflect.field(s, 'gf'), [400, 130]);
 			ctx.writeJson('stages/$id.json', {
-				directory: '',
 				defaultZoom: num(Reflect.field(s, 'zoom'), 0.9),
 				isPixelStage: Reflect.field(s, 'pixel') == true,
 				stageUI: Reflect.field(s, 'pixel') == true ? 'pixel' : 'normal',
@@ -201,7 +213,11 @@ class EchoModLoader
 				camera_opponent: pair(Reflect.field(s, 'dadCamera'), [0, 0]),
 				camera_girlfriend: pair(Reflect.field(s, 'gfCamera'), [0, 0]),
 				camera_speed: num(Reflect.field(s, 'cameraSpeed'), 1),
-				echoLayers: layers
+				directory: str(Reflect.field(s, 'directory'), ''),
+				echoLayers: layers,
+				echoFilters: list(Reflect.field(s, 'filters'), []),
+				echoBehaviors: list(Reflect.field(s, 'behaviors'), []),
+				echoGameOver: Reflect.field(s, 'gameOver')
 			});
 			ctx.report.converted.push('stage: $id (${layers.length} layers)');
 		}

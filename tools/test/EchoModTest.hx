@@ -35,6 +35,31 @@ class EchoModTest
 		Sys.println('data parser: ok');
 	}
 
+	/** Echo chart -> chart of the engine -> Echo chart (what the chart editor saves) must give the same notes. */
+	static function roundTrip(files:Map<String, Bytes>):Void
+	{
+		var checked = 0, bad = 0;
+		for (k in files.keys())
+		{
+			var m = ~/^charts\/([^\/]+)\/([^\/]+)\.js(on)?$/;
+			if (!m.match(k)) continue;
+			var song = m.matched(1), diff = m.matched(2);
+			var orig:Dynamic = EchoData.parse(files.get(k).toString());
+			var psychPath = diff.toLowerCase() == 'normal' ? 'data/$song/$song.json' : 'data/$song/$song-' + diff.toLowerCase() + '.json';
+			if (!files.exists(psychPath)) continue;
+			var j:Dynamic = haxe.Json.parse(files.get(psychPath).toString());
+			var psych:Dynamic = Std.isOfType(j.song, String) ? j : j.song;
+			var back:Dynamic = echo.mods.EchoChart.fromSong(psych);
+			var key = function(n:Dynamic) return Math.round(n.t) + ':' + n.lane + ':' + Math.round(n.len == null ? 0 : n.len);
+			var a = [for (n in (orig.notes : Array<Dynamic>)) key(n)];
+			var b = [for (n in (back.notes : Array<Dynamic>)) key(n)];
+			a.sort(Reflect.compare); b.sort(Reflect.compare);
+			checked++;
+			if (a.join(',') != b.join(',')) { bad++; Sys.println('  ROUND TRIP DIFFERS: $song / $diff (${a.length} vs ${b.length} notes)'); }
+		}
+		Sys.println('chart round trip: $checked charts, $bad different');
+	}
+
 	static function main():Void
 	{
 		selfTest();
@@ -48,6 +73,7 @@ class EchoModTest
 		for (c in report.converted) Sys.println('  ' + c);
 		Sys.println('warnings: ' + report.warnings.length);
 		for (w in report.warnings) Sys.println('  ! ' + w);
+		roundTrip(files);
 		for (k in files.keys())
 		{
 			if (before.indexOf(k) >= 0 && !StringTools.endsWith(k, '.json')) continue;

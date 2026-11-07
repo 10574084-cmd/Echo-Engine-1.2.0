@@ -419,10 +419,36 @@ def copy_rest(mod, out, ids, report):
             count += 1
     report.append('copied as they are: %d files' % count)
 
+NATIVE = [True]
+
+def apply_native(mod, out, report):
+    """Stages that are written natively for Echo (layers + filters + behaviors, tools/echo_native/<mod>/stages) replace the stage scripts
+    of a known mod, so they run without Lua."""
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'echo_native')
+    if not os.path.isdir(base): return
+    name = ''
+    try: name = read_json(os.path.join(mod, 'pack.json')).get('name', '')
+    except Exception: pass
+    for d in sorted(os.listdir(base)):
+        if d != slug(name) and d != slug(os.path.basename(os.path.normpath(mod))): continue
+        sdir = os.path.join(base, d, 'stages')
+        for fn in sorted(os.listdir(sdir)):
+            sid, ext = os.path.splitext(fn)
+            if ext != '.js': continue
+            if not os.path.exists(os.path.join(mod, 'stages', sid + '.lua')): continue   # the mod does not have the stage
+            for e in ('.json', '.lua'):
+                f = os.path.join(out, 'stages', sid + e)
+                if os.path.exists(f): os.remove(f)
+            os.makedirs(os.path.join(out, 'stages'), exist_ok=True)
+            shutil.copyfile(os.path.join(sdir, fn), os.path.join(out, 'stages', fn))
+            if os.path.exists(os.path.join(sdir, sid + '.lua')):
+                shutil.copyfile(os.path.join(sdir, sid + '.lua'), os.path.join(out, 'stages', sid + '.lua'))
+            report.append('stage %s: native Echo version (no script)' % sid)
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('mod'); ap.add_argument('out')
-    ap.add_argument('--songs'); ap.add_argument('--webp', action='store_true'); ap.add_argument('--json', action='store_true'); ap.add_argument('--no-hybrid', action='store_true')
+    ap.add_argument('--songs'); ap.add_argument('--webp', action='store_true'); ap.add_argument('--json', action='store_true'); ap.add_argument('--no-hybrid', action='store_true'); ap.add_argument('--no-native', action='store_true')
     a = ap.parse_args()
     only = [s.strip() for s in a.songs.split(',')] if a.songs else None
     HYBRID[0] = not a.no_hybrid
@@ -435,6 +461,7 @@ def main():
     convert_stages(a.mod, a.out, a.json, a.webp, report, stages if only else None)
     convert_weeks(a.mod, a.out, a.json, report, ids)
     if HYBRID[0]: copy_rest(a.mod, a.out, ids, report)
+    if HYBRID[0] and not a.no_native: apply_native(a.mod, a.out, report)
     print('\n'.join(report))
 
 if __name__ == '__main__':

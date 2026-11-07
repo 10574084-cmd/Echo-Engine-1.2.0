@@ -627,18 +627,22 @@ class PlayState extends MusicBeatState
 
 		startingSong = true;
 
+		// events of Echo mods that the engine does by itself (no script needed, see echo.EchoEvents)
+		var echoNative:Array<String> = [for (event in eventsPushed) if (echo.EchoEvents.native(event)) event];
+		if (echoNative.length > 0) new echo.EchoEvents(echoNative.indexOf('Set Camera Zoom') >= 0 || echoNative.indexOf('Set Camera Bop') >= 0);
+
 		#if LUA_ALLOWED
 		for (notetype in noteTypes)
 			startLuasNamed('custom_notetypes/' + notetype + '.lua');
 		for (event in eventsPushed)
-			startLuasNamed('custom_events/' + event + '.lua');
+			if (echoNative.indexOf(event) < 0) startLuasNamed('custom_events/' + event + '.lua');
 		#end
 
 		#if HSCRIPT_ALLOWED
 		for (notetype in noteTypes)
 			startHScriptsNamed('custom_notetypes/' + notetype + '.hx');
 		for (event in eventsPushed)
-			startHScriptsNamed('custom_events/' + event + '.hx');
+			if (echoNative.indexOf(event) < 0) startHScriptsNamed('custom_events/' + event + '.hx');
 		#end
 		noteTypes = null;
 		eventsPushed = null;
