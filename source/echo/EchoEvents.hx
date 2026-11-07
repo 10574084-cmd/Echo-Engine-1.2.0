@@ -147,7 +147,7 @@ class EchoEvents extends BaseStage
 	function setTarget(v1:String, v2:String)
 	{
 		if (camTween != null) { camTween.cancel(); camTween = null; }
-		var sec = game.SONG.notes[game.curSection];
+		var sec = states.PlayState.SONG.notes[game.curSection];
 		if (StringTools.trim(v1 == null ? '' : v1) == '')
 		{
 			// back to the camera of the sections
@@ -216,7 +216,7 @@ class EchoEvents extends BaseStage
 		var s = parts(v1);
 		var t = parts(v2);
 		var value = (s[0] == '') ? 1 : Std.parseFloat(s[0]);
-		var target = (s.length > 1 && s[1] == 'absolute') ? value * scrollMultiplier : value * game.SONG.speed * scrollMultiplier;
+		var target = (s.length > 1 && s[1] == 'absolute') ? value * scrollMultiplier : value * states.PlayState.SONG.speed * scrollMultiplier;
 		var n = (t[0] == '') ? 0 : Std.parseFloat(t[0]);
 		if (Math.isNaN(n) || n <= 0) { game.songSpeed = target; return; }
 		scrollTween = FlxTween.tween(game, {songSpeed: target}, steps(n), {ease: LuaUtils.getTweenEaseByString(t.length > 1 ? t[1] : 'linear')});
